@@ -18,4 +18,10 @@ This file summarizes the main hardware and materials purchased or used for our a
 - The hardware listed above was used for fan sound acquisition, embedded audio sensing, demo development, and experimental validation.
 - Receipt screenshots are attached separately for items purchased by the team.
 
-# 
+# Receipts
+![Figure 3: Wathai Axial Fan](images/03.png)
+![Figure 4: Breadboard and Jumper Wires](images/04.png)
+![Figure 5: ESP-32 Development Board](images/05.png)
+![Figure 6: INMP441 Microphone Module](images/06.png)
+![Figure 7: Razer Seiren V3 Microphone](images/07.jpg)
+![Figure 8: Micro SD Card Adapter](images/08.png)
