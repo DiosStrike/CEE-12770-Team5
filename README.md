@@ -2,9 +2,9 @@
 
 ## Overview
 
-This repository contains the implementation of our course project on HVAC motor anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from motor sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo and a real-time microphone recording utility.
+This repository contains the implementation of our course project on HVAC motor anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from motor sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo that supports both uploaded audio analysis and live microphone streaming.
 
-At the current stage, the repository includes a baseline autoencoder inference system for uploaded audio clips and a standalone microphone-based recording script for collecting real-world sound data. In the next stage of the project, we plan to extend this baseline through fine-tuning on normal recordings collected from our own small fan setup, allowing the model to better adapt to the target acoustic environment.
+At the current stage, the repository includes a baseline autoencoder inference system for uploaded audio clips, a live microphone analysis mode in the Gradio demo, and a standalone microphone-based recording script for collecting real-world sound data. In the next stage of the project, we plan to extend this baseline through fine-tuning on normal recordings collected from our own small fan setup, allowing the model to better adapt to the target acoustic environment.
 
 ## Project Objectives
 
@@ -13,7 +13,7 @@ The main objectives of this project are:
 1. To detect anomalous HVAC motor behavior from acoustic signals.
 2. To implement a baseline reconstruction-based anomaly detection pipeline.
 3. To support inference across multiple machine IDs using separately trained models.
-4. To provide an interactive web-based interface for testing uploaded audio clips.
+4. To provide an interactive web-based interface for testing uploaded audio clips and live microphone input.
 5. To support real-world audio collection through a microphone recording utility.
 6. To adapt the baseline model to our own physical fan setup through a fine-tuning stage based on normal operating sounds.
 
@@ -35,9 +35,10 @@ The current repository focuses on a baseline anomaly detection workflow:
 - reconstruction-based anomaly scoring
 - threshold-based decision logic
 - multi-model inference through a Gradio demo
+- live microphone streaming for real-time analysis
 - real-world audio recording through a microphone utility
 
-This stage establishes the end-to-end pipeline and provides a deployable demonstration environment for testing uploaded recordings.
+This stage establishes the end-to-end pipeline and provides a deployable demonstration environment for testing uploaded recordings and live audio input.
 
 ### Stage 2: Fine-Tuning for the Real Fan Setup
 
@@ -69,7 +70,7 @@ The linear-frequency spectrum is then mapped into a 64-band mel representation. 
 
 Next, the mel spectrogram is converted into log-mel energy:
 
-$\text{LogMel} = \frac{20}{power} \cdot \log_{10}(\text{Mel} + \epsilon)$
+`LogMel = (20 / power) * log10(Mel + epsilon)`
 
 The logarithmic transform compresses the dynamic range of the signal and makes the feature scale more suitable for neural-network-based learning.
 
@@ -100,6 +101,14 @@ Current architecture:
 ReLU is used in the hidden layers to provide nonlinear representation capacity, while the output layer remains linear so that the reconstructed vector can match the continuous numerical range of the log-mel input.
 
 The bottleneck layer contains only 8 dimensions. This narrow latent space forces the model to retain only the most salient structure of normal acoustic patterns. As a result, abnormal sounds are generally harder to reconstruct accurately.
+
+The current training data for the baseline model are based on the **fan** audio subset provided in the MIMII baseline dataset repository:
+
+- https://github.com/MIMII-hitachi/mimii_baseline/blob/master/dataset/7z.sh
+
+The baseline implementation is referenced from:
+
+- DOI: `10.5281/zenodo.7551260`
 
 ## Fine-Tuning Plan
 
@@ -144,6 +153,10 @@ This repository includes a Gradio-based demo for interactive anomaly diagnosis.
 
 ### Demo Functions
 
+The current demo supports two analysis modes:
+
+#### 1. Uploaded Audio Analysis
+
 - Accepts an uploaded audio clip as input.
 - Applies the same preprocessing pipeline used by the baseline model.
 - Loads trained checkpoints for four machine IDs.
@@ -151,15 +164,41 @@ This repository includes a Gradio-based demo for interactive anomaly diagnosis.
 - Compares each score with its corresponding threshold.
 - Displays the final normal or anomaly decision together with the MSE value and threshold.
 
+#### 2. Live Microphone Analysis
+
+- Accepts live microphone input directly from the browser.
+- Continuously receives streaming audio chunks during recording.
+- Maintains a rolling buffer containing the most recent 10 seconds of audio.
+- Starts producing predictions once at least 2 seconds of audio have been accumulated.
+- Updates the model results every 1 second during live recording.
+- Applies the same feature extraction and four-model inference pipeline used in offline analysis.
+
+In live mode, the backend does not analyze each tiny chunk independently. Instead, it continuously aggregates incoming audio into a rolling window and repeatedly runs anomaly detection on the buffered waveform. This design provides a more stable and interpretable form of real-time detection.
+
 The current interface provides a simple and interpretable way to test the anomaly detection pipeline in a browser environment.
 
 In future updates, the demo may also be extended to support inference with the fine-tuned model adapted to the real fan setup.
 
 ## Real-World Microphone Workflow
 
-In addition to the Gradio demo, the repository includes a standalone microphone recording script for collecting real-world audio signals.
+In addition to uploaded audio analysis, the current system now supports direct live microphone streaming through the Gradio interface.
 
-### Recording Utility Functions
+### Live Microphone Workflow
+
+1. Open the **Live Microphone** tab in the demo.
+2. Start recording through the browser microphone input.
+3. Let the system accumulate audio in a rolling 10-second buffer.
+4. After at least 2 seconds of signal have been collected, the backend begins inference.
+5. The buffered waveform is converted into log-mel stacked features and passed through the four trained autoencoder models.
+6. The predictions are refreshed every 1 second while recording continues.
+
+This allows the system to perform rolling-window real-time anomaly detection instead of relying only on file-based interaction.
+
+### Standalone Recording Utility
+
+The repository also includes a standalone microphone recording script for collecting real-world audio signals.
+
+#### Recording Utility Functions
 
 - Records audio from a selected microphone input device.
 - Uses a sampling rate of 16 kHz and a single audio channel.
@@ -168,20 +207,7 @@ In addition to the Gradio demo, the repository includes a standalone microphone 
 - Displays the complete waveform after recording.
 - Displays the spectrogram for qualitative inspection.
 
-### How the Microphone Connects to the Demo
-
-At the current stage, the microphone utility and the Gradio demo are connected through file-based interaction rather than direct live streaming.
-
-The workflow is as follows:
-
-1. Record real-world motor audio using the microphone script.
-2. Save the output audio as a `.wav` file.
-3. Upload the recorded file into the Gradio demo.
-4. Run anomaly detection across the trained models.
-
-This modular design allows us to inspect recordings before sending them into the inference interface.
-
-In the fine-tuning stage, these real-world microphone recordings will also serve as the primary source of target-domain normal data.
+This standalone utility remains useful for debugging, inspecting audio quality, and collecting real-world recordings that may later be used for fine-tuning or offline testing.
 
 ## Repository Structure
 
