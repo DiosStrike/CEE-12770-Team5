@@ -18,6 +18,9 @@ This file summarizes the main hardware and materials purchased or used for our a
 - The hardware listed above was used for fan sound acquisition, embedded audio sensing, demo development, and experimental validation.
 - Receipt screenshots are attached separately for items purchased by the team.
 
+
+* **Purchaser:** All hardware items listed above were purchased by my teammate, **Zexi Yin**. 
+
 # Receipts
 ![Figure 3: Wathai Axial Fan](images/03.png)
 ![Figure 4: Breadboard and Jumper Wires](images/04.png)
