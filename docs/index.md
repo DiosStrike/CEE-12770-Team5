@@ -171,18 +171,22 @@ By the end of Week 2, the project had achieved progress on both the sensing and 
 
 ## Week 3 – Demo Deployment and Real-World Recording Experiments
 
-In the third week, the project progressed from offline analysis and baseline model setup to interactive demonstration and real-world recording validation. The main focus was on building a working demo interface, testing the model with externally recorded fan sounds, and exploring real-time inference through a live microphone connection.
+In the third week, the project progressed from offline analysis and baseline model setup to interactive demonstration and real-world recording validation. The main focus was on building a working demo interface, testing the model with externally recorded fan sounds, and extending the system from offline uploaded-audio analysis to browser-based live microphone inference.
 
 ### Demo Development
 
-During this stage, we built an interactive demo for anomaly detection. The demo was designed to take an input audio clip, apply the same preprocessing pipeline used in the baseline model, and output anomaly predictions based on reconstruction error.
+During this stage, we built an interactive demo for anomaly detection. The demo was designed to support both uploaded audio analysis and live microphone analysis using the same preprocessing and reconstruction-based inference pipeline.
 
-The demo supports:
+The updated demo now supports:
 
 - audio upload for offline testing
 - model inference using the established autoencoder pipeline
 - threshold-based prediction output
 - interpretable display of reconstruction-based anomaly results
+- live microphone streaming directly from the browser
+- rolling-window analysis for near-real-time prediction updates
+
+In live mode, the browser continuously streams microphone audio to the backend. Instead of analyzing each tiny chunk independently, the system maintains a rolling buffer containing the most recent **10 seconds** of audio. After at least **2 seconds** of signal have been accumulated, the backend begins inference and updates the prediction every **1 second**. At each update, the buffered waveform is converted into stacked log-mel features and passed through the four trained models to generate anomaly scores and threshold-based decisions.
 
 This step was important because it connected the modeling pipeline to a user-facing interface and made the anomaly detection results easier to test and interpret in practice.
 
@@ -228,13 +232,18 @@ These results suggest that the fan sound contains meaningful acoustic signatures
 
 ### Real-Time Demo Experiment
 
-In addition to offline recording tests, we also explored a real-time demo workflow.
+In addition to offline recording tests, we further developed and tested a real-time demo workflow based on browser microphone streaming.
 
 In this setup:
 
-- a microphone was connected to the computer
-- sound was captured in real time
-- the demo processed incoming audio and returned prediction results interactively
+- the browser microphone was used as the live input source
+- audio was continuously streamed to the backend during recording
+- the backend maintained a rolling 10-second audio buffer
+- the system began prediction after the first 2 seconds of signal had been collected
+- the four-model inference results were refreshed every 1 second
+- the live diagnostic output was displayed directly in the demo interface
+
+This design provided a much more practical form of online anomaly monitoring than the earlier file-only workflow. Rather than waiting for a recording to finish before processing, the system could continuously evaluate the most recent segment of incoming sound and update the results interactively.
 
 This experiment was an important step toward live anomaly detection, since it moved the system closer to practical deployment rather than relying only on pre-recorded `.wav` files.
 
@@ -247,7 +256,8 @@ By the end of Week 3, the project had achieved the following progress:
 - tested multiple voltage conditions under real recording settings
 - compared normal fan operation with a physically blocked condition
 - confirmed that the recorded sounds show clear perceptual differences
-- explored real-time prediction through a microphone-connected demo workflow
+- implemented browser-based live microphone streaming in the demo
+- realized rolling-window real-time anomaly detection with periodic prediction updates
 
 ---
 
@@ -263,7 +273,7 @@ Across the first three weeks, the project has achieved the following milestones:
 - established the baseline feature extraction and model training pipeline for acoustic anomaly detection
 - built an interactive demo for reconstruction-based anomaly detection
 - tested the system with smartphone-recorded fan audio under multiple voltage conditions
-- explored real-time prediction using a live microphone-connected workflow
+- implemented rolling-window live microphone analysis in the demo
 
 ## Next Steps
 
