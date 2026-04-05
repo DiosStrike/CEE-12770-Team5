@@ -79,6 +79,8 @@ The collected data were analyzed in Python using:
 - boxplot
 
 ### Observations
+![Figure 1](assets/images/01.jpg)
+![Figure 2](assets/images/02.png)
 
 #### Clear separability between scenarios
 
