@@ -1,0 +1,227 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+
+\title{HVAC Motor Anomaly Detection via Reconstruction-Based Acoustic Modeling and Live Microphone Inference}
+\author{
+Tanghao Chen \\
+\texttt{tanghaoc@andrew.cmu.edu}
+\and
+Yizhen Xu \\
+\texttt{yizhenxu@andrew.cmu.edu}
+\and
+Zexi Yin \\
+\texttt{zexiyin@andrew.cmu.edu}
+}
+\date{April 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This project investigates acoustic anomaly detection for small fan and HVAC-like systems using a reconstruction-based machine learning pipeline. Our system converts audio recordings into stacked log-mel spectral features and applies multiple autoencoder models to estimate anomaly scores through reconstruction error. In addition to offline uploaded-audio inference, we develop an interactive demo that supports live microphone streaming and rolling-window real-time analysis. We further evaluate the system using smartphone-recorded fan sounds under multiple voltage settings and disturbed airflow conditions. In the next stage, we plan to fine-tune the baseline model using normal recordings collected from our own physical fan setup in order to improve target-domain adaptation and real-world robustness.
+\end{abstract}
+
+\section{Introduction}
+
+Acoustic anomaly detection provides a non-contact and low-cost approach for monitoring the operating condition of motors and fan-based systems. In this project, we study whether abnormal fan behavior can be identified from sound recordings using a reconstruction-based machine learning framework.
+
+Our project combines hardware sensing, signal analysis, baseline autoencoder training, and an interactive demo for both offline and live microphone inference. The ultimate goal is to build a practical pipeline that can distinguish normal and abnormal fan operating conditions and later adapt more closely to our own physical setup through fine-tuning.
+
+\section{Project Overview and Contributions}
+
+The main contributions of this project are as follows:
+\begin{itemize}
+    \item Development of a baseline acoustic anomaly detection pipeline based on stacked log-mel features and autoencoder reconstruction error.
+    \item Construction of an interactive Gradio demo for uploaded-audio analysis and live microphone inference.
+    \item Real-world recording experiments using smartphone and microphone-based fan sound collection.
+    \item A planned fine-tuning stage to adapt the baseline model to the target acoustic environment of our own fan setup.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \fbox{\rule{0pt}{2.2in}\rule{0.9\linewidth}{0pt}}
+    \caption{Overall system pipeline, including audio acquisition, preprocessing, feature extraction, autoencoder inference, and anomaly score generation.}
+    \label{fig:pipeline}
+\end{figure}
+
+\section{Related Background}
+
+\subsection{Acoustic Anomaly Detection}
+
+Acoustic anomaly detection aims to identify abnormal operating conditions from sound signals. In industrial systems, this often relies on modeling normal acoustic behavior and detecting deviations through reconstruction error or likelihood-based methods.
+
+\subsection{Baseline Dataset and Reference Implementation}
+
+The baseline model in this project is trained using the fan subset of the MIMII baseline dataset. Our implementation is based on the reconstruction-based baseline workflow referenced in the existing MIMII baseline release.
+
+\section{System Design}
+
+\subsection{Hardware Setup}
+
+The hardware used in this project includes:
+\begin{itemize}
+    \item ESP32 development board
+    \item INMP441 I2S MEMS microphone
+    \item external USB microphone
+    \item fan device for acoustic experiments
+    \item breadboard and jumper wires for prototyping
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \fbox{\rule{0pt}{2.0in}\rule{0.85\linewidth}{0pt}}
+    \caption{Hardware setup used for fan sound acquisition and embedded sensing experiments.}
+    \label{fig:hardware}
+\end{figure}
+
+\subsection{Demo Architecture}
+
+The demo supports two inference modes:
+\begin{itemize}
+    \item uploaded audio analysis
+    \item live microphone analysis with rolling-window inference
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \fbox{\rule{0pt}{2.0in}\rule{0.85\linewidth}{0pt}}
+    \caption{Interactive demo interface for uploaded-audio analysis and live microphone streaming.}
+    \label{fig:demo}
+\end{figure}
+
+\section{Methodology}
+
+\subsection{Audio Preprocessing}
+
+The input waveform is resampled to 16\,kHz and converted into a time-frequency representation using Short-Time Fourier Transform (STFT). The linear-frequency spectrum is then mapped to 64 mel bands and transformed into log-mel energy.
+
+\subsection{Frame Stacking}
+
+Instead of using a single spectral frame, the system stacks 5 consecutive frames. Since each frame contains 64 mel coefficients, this produces a 320-dimensional input vector.
+
+\subsection{Baseline Model Architecture}
+
+The baseline anomaly detector is a fully connected autoencoder:
+\begin{itemize}
+    \item Input: 320
+    \item Encoder: 320 $\rightarrow$ 64 $\rightarrow$ 64 $\rightarrow$ 8
+    \item Decoder: 8 $\rightarrow$ 64 $\rightarrow$ 64 $\rightarrow$ 320
+\end{itemize}
+
+\subsection{Anomaly Score and Thresholding}
+
+The anomaly score is defined as the mean squared error (MSE) between the input feature vector and the reconstructed output. File-level scores are obtained by averaging frame-level reconstruction errors. Final decisions are made by comparing these scores to model-specific thresholds.
+
+\begin{table}[H]
+    \centering
+    \caption{Model-specific thresholds used in the baseline demo.}
+    \label{tab:thresholds}
+    \begin{tabular}{cc}
+        \toprule
+        Model ID & Threshold \\
+        \midrule
+        00 & 6.9 \\
+        02 & 6.0 \\
+        04 & 5.3 \\
+        06 & 7.0 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Experimental Setup}
+
+\subsection{Signal Stabilization Experiments}
+
+We first evaluated whether the sensing system could distinguish among different operating scenarios:
+\begin{itemize}
+    \item quiet background condition
+    \item fan at constant voltage
+    \item fan under varying voltage
+\end{itemize}
+
+\subsection{Smartphone Recording Experiments}
+
+We conducted real-world recording experiments using a smartphone microphone placed 15\,cm away from the fan at a 45-degree angle relative to the outlet side. Three voltage settings were tested: 4V, 8V, and 12V. For each voltage, both normal and blocked airflow conditions were recorded.
+
+\subsection{Live Demo Experiments}
+
+The live demo uses browser microphone streaming. The system maintains a rolling 10-second audio buffer, begins inference after at least 2 seconds of accumulated signal, and updates predictions every 1 second.
+
+\begin{table}[H]
+    \centering
+    \caption{Experimental conditions used in real-world recording and live demo evaluation.}
+    \label{tab:exp_conditions}
+    \begin{tabular}{lll}
+        \toprule
+        Experiment Type & Condition & Variables \\
+        \midrule
+        Signal analysis & Quiet / Constant / Varying & background noise, voltage \\
+        Smartphone recording & Normal / Blocked & 4V, 8V, 12V \\
+        Live demo & Streaming inference & rolling window, update rate \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Results}
+
+\subsection{Preliminary Signal Analysis Results}
+
+The preliminary analysis showed clear separability among quiet, constant-voltage, and varying-voltage conditions. Constant-voltage operation exhibited the lowest variance, while varying-voltage operation showed stronger fluctuations.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\rule{0pt}{2.0in}\rule{0.85\linewidth}{0pt}}
+    \caption{Preliminary signal analysis results, including time-series statistics and distribution comparisons across operating conditions.}
+    \label{fig:signal_results}
+\end{figure}
+
+\subsection{Demo and Inference Results}
+
+The demo successfully supports both uploaded-audio and live microphone analysis. In live mode, the system produces rolling-window predictions based on the most recent 10 seconds of audio and refreshes the results every 1 second.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\rule{0pt}{2.0in}\rule{0.85\linewidth}{0pt}}
+    \caption{Example demo output for four-model anomaly inference.}
+    \label{fig:demo_results}
+\end{figure}
+
+\subsection{Real-World Recording Observations}
+
+The smartphone-recorded audio showed perceptible acoustic differences between normal and blocked fan operation, particularly under different voltage settings. These observations suggest that the collected real-world sounds contain meaningful information related to system state.
+
+\section{Discussion}
+
+The current results indicate that reconstruction-based acoustic modeling is a promising approach for distinguishing fan operating conditions. However, the baseline model is still trained on a public dataset and may not yet be fully adapted to the acoustic characteristics of our own setup.
+
+The live demo improves practical usability by allowing rolling-window inference, but real-time performance and threshold robustness still need further validation under more diverse recording conditions.
+
+\section{Future Work}
+
+The next stage of the project will focus on:
+\begin{itemize}
+    \item collecting additional normal recordings from our own fan setup
+    \item fine-tuning the baseline model on target-domain normal data
+    \item re-estimating thresholds after model adaptation
+    \item improving consistency between offline recordings and live microphone inference
+    \item preparing final report, poster, and demo materials
+\end{itemize}
+
+\section{Conclusion}
+
+This project develops an end-to-end acoustic anomaly detection pipeline for small fan and HVAC-like systems. The current system integrates hardware sensing, baseline autoencoder modeling, real-world recording experiments, and a live inference demo. Preliminary results support the feasibility of reconstruction-based anomaly detection in this setting and motivate further fine-tuning toward the target acoustic environment.
+
+\section*{Acknowledgments}
+
+We thank the course staff and collaborators for feedback on project scope, experimental design, and reporting requirements.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
