@@ -1,7 +1,7 @@
 [project]
-name = "project"
+name = "hvac-acoustic-anomaly-detection"
 version = "0.1.0"
-description = "Add your description here"
+description = "A web-based acoustic anomaly detection system for HVAC motors using autoencoders and mel-spectrograms (12-770 Final Project)."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
