@@ -19,7 +19,7 @@ This file summarizes the main hardware and materials purchased or used for our a
 - Receipt screenshots are attached separately for items purchased by the team.
 
 
-* **Purchaser:** All hardware items listed above were purchased by my teammate, **Zexi Yin**. 
+* **Purchaser:** All hardware items listed above were purchased by our teammate, **Zexi Yin**. 
 
 # Receipts
 ![Figure 3: Wathai Axial Fan](images/03.png)
