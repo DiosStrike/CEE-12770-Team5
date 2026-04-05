@@ -1,5 +1,11 @@
 # HVAC Motor Anomaly Detection
 
+## Project Website
+
+Project progress updates are available at:
+
+[https://diosstrike.github.io/CEE-12770-Team5/](https://diosstrike.github.io/CEE-12770-Team5/)
+
 ## Overview
 
 This repository contains the implementation of our course project on HVAC motor anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from motor sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo that supports both uploaded audio analysis and live microphone streaming.
