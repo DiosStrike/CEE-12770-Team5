@@ -69,9 +69,7 @@ The linear-frequency spectrum is then mapped into a 64-band mel representation. 
 
 Next, the mel spectrogram is converted into log-mel energy:
 
-\[
-\text{LogMel} = \frac{20}{power} \cdot \log_{10}(\text{Mel} + \epsilon)
-\]
+$\text{LogMel} = \frac{20}{power} \cdot \log_{10}(\text{Mel} + \epsilon)$
 
 The logarithmic transform compresses the dynamic range of the signal and makes the feature scale more suitable for neural-network-based learning.
 
