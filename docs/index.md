@@ -287,3 +287,16 @@ The next phase of the project will focus on improving the connection between rea
 - fine-tuning the baseline model on target-domain normal audio
 - updating thresholds after model adaptation
 - preparing final report, poster, and demonstration materials
+
+# What We Learned: Assignment 4 Progress Summary
+
+Through this assignment, our team reached a strong consensus on our system architecture and experimental validation strategies. Here is what each team member learned during this phase:
+
+**Tanghao Chen**
+Through deploying our Gradio-based interactive diagnostic demo, I gained a deep understanding of setting scientific decision boundaries. By analyzing validation score distributions, I configured precise MSE thresholds (e.g., 6.9, 6.0, 5.3, 7.0) for four machine IDs. A major learning point was balancing response speed and diagnostic stability during live microphone integration. I implemented a 10-second rolling buffer that accumulates 2 seconds of audio before updating predictions every second. Mastering this tradeoff between "time window length" and "interpretability" in real-time engineering was my core takeaway, laying the groundwork for future model adaptation in real physical environments.
+
+**Yizhen Xu**
+My primary focus was building and training the anomaly detection models using the MIMII dataset to accurately classify the operational status of fan motors. I gained hands-on experience by implementing and comparing two distinct architectures: a baseline Dense Autoencoder (DenseAE) and a Residual Autoencoder (ResidualAE). Throughout the optimization process, I learned the critical importance of robust training strategies. I experimented with various techniques to improve model generalization, including injecting synthetic data noise, modifying the underlying network structures, and systematically tuning hyperparameters. These iterative refinements significantly deepened my understanding of autoencoder behaviors in acoustic anomaly detection.
+
+**Zexi Yin**
+My key learning revolved around the complexities of real-time acoustic data acquisition. Initially building an ESP32 + INMP441 system, I spent significant time debugging issues like discontinuous signals and serial bandwidth bottlenecks at high sampling rates, eventually pivoting to SD card local storage. To ensure our demo progressed smoothly, I engineered a stable PC-based USB microphone pipeline featuring real-time recording and waveform/spectrogram visualization. Resolving buffer and shape mismatch errors taught me how to effectively manage audio data structures. Ultimately, transitioning from offline audio to window-sliced real-time streaming was a crucial structural agreement our team reached this week.
