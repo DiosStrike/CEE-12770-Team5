@@ -217,11 +217,24 @@ This standalone utility remains useful for debugging, inspecting audio quality, 
 
 ## Repository Structure
 
+## Repository Structure
+
 ```text
-CEE-12770-Team5/
-├── code/                 # Source code for training, inference, and utilities
-├── data/                 # Audio data, test samples, or dataset-related files
-├── pyproject.toml        # Project metadata and dependency configuration
-├── uv.lock               # Locked dependency file for uv
-├── .gitignore
-└── README.md
+.
+├── code/                       # Source code for the project
+│   ├── .gradio/flagged/        # Gradio flagged data/logs
+│   ├── app.py                  # Gradio web demo application for real-time and offline analysis
+│   ├── baseline_runner.ipynb   # Jupyter notebook for running and evaluating baseline models
+│   └── data/                   # Directory for storing audio datasets and samples
+├── docs/                       # Project documentation and Assignment deliverables
+│   ├── images/                 # Image assets (e.g., hardware receipts, figures)
+│   ├── experimental_plan.md    # Task 5: Detailed experimental validation plan
+│   ├── future_weekly_plan.md   # Task 6: Week-by-week timeline to Demo Day
+│   ├── hardware.md             # Task 2: Hardware list and reimbursement statements
+│   └── index.md                # GitHub Pages entry point (contains Task 7 learnings summary)
+├── report/                     # Task 3 & 4: Final project report templates and placeholders
+├── .gitignore                  # Git ignore rules
+├── .python-version             # Python version specification
+├── README.md                   # Project overview and instructions
+├── pyproject.toml              # Task 1: uv project configuration and dependencies
+└── uv.lock                     # Task 1: uv lockfile for exact dependency versions
