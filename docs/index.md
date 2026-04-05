@@ -288,7 +288,7 @@ The next phase of the project will focus on improving the connection between rea
 - updating thresholds after model adaptation
 - preparing final report, poster, and demonstration materials
 
-# What We Learned: Assignment 4 Progress Summary
+# What We Learned:
 
 Through this assignment, our team reached a strong consensus on our system architecture and experimental validation strategies. Here is what each team member learned during this phase:
 
