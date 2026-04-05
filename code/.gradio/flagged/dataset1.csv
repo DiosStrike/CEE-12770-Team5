@@ -1,0 +1,60 @@
+Input Audio,Diagnostic Report,timestamp
+,"<div style='display: flex; flex-direction: column; gap: 10px;'>
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_00: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>224.0809</b> | Threshold: 11.0
+                </div>
+            </div>
+            
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_02: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>208.2747</b> | Threshold: 6.8
+                </div>
+            </div>
+            
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_04: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>165.0844</b> | Threshold: 7.0
+                </div>
+            </div>
+            
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_06: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>162.3854</b> | Threshold: 6.5
+                </div>
+            </div>
+            </div>",2026-04-03 16:31:41.697261
+.gradio/flagged/Input Audio/52d762053101a95ca215/遮挡_12v_01.m4a,"<div style='display: flex; flex-direction: column; gap: 10px;'>
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_00: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>193.5426</b> | Threshold: 11.0
+                </div>
+            </div>
+            
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_02: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>180.6761</b> | Threshold: 6.8
+                </div>
+            </div>
+            
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_04: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>130.9741</b> | Threshold: 7.0
+                </div>
+            </div>
+            
+            <div style='border: 2px solid red; background-color: #ffebee; padding: 10px; border-radius: 6px;'>
+                <h4 style='margin: 0 0 5px 0; color: red;'>Model ID_06: 🚨 Anomaly</h4>
+                <div style='font-family: monospace; font-size: 13px; color: #333;'>
+                    MSE: <b>141.9788</b> | Threshold: 6.5
+                </div>
+            </div>
+            </div>",2026-04-03 16:32:22.007364
+,,2026-04-03 16:35:49.672743
