@@ -1,4 +1,4 @@
-# HVAC Motor Anomaly Detection
+# HVAC Fan Anomaly Detection
 
 ## Project Website
 
