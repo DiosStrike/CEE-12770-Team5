@@ -8,7 +8,7 @@ Project progress updates are available at:
 
 ## Overview
 
-This repository contains the implementation of our course project on HVAC motor anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from motor sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo that supports both uploaded audio analysis and live microphone streaming.
+This repository contains the implementation of our course project on HVAC fan anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from fan sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo that supports both uploaded audio analysis and live microphone streaming.
 
 At the current stage, the repository includes a baseline autoencoder inference system for uploaded audio clips, a live microphone analysis mode in the Gradio demo, and a standalone microphone-based recording script for collecting real-world sound data. In the next stage of the project, we plan to extend this baseline through fine-tuning on normal recordings collected from our own small fan setup, allowing the model to better adapt to the target acoustic environment.
 
@@ -16,7 +16,7 @@ At the current stage, the repository includes a baseline autoencoder inference s
 
 The main objectives of this project are:
 
-1. To detect anomalous HVAC motor behavior from acoustic signals.
+1. To detect anomalous HVAC fan behavior from acoustic signals.
 2. To implement a baseline reconstruction-based anomaly detection pipeline.
 3. To support inference across multiple machine IDs using separately trained models.
 4. To provide an interactive web-based interface for testing uploaded audio clips and live microphone input.
@@ -63,7 +63,7 @@ The purpose of this stage is to reduce the mismatch between the baseline trainin
 
 ### Audio Preprocessing and Feature Extraction
 
-The input audio is first loaded as a mono waveform and resampled to 16 kHz. This standardizes the input format and reduces unnecessary bandwidth while preserving the dominant frequency content relevant to motor anomaly detection.
+The input audio is first loaded as a mono waveform and resampled to 16 kHz. This standardizes the input format and reduces unnecessary bandwidth while preserving the dominant frequency content relevant to fan anomaly detection.
 
 Short-Time Fourier Transform (STFT) is then applied using:
 
