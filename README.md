@@ -39,10 +39,9 @@ Unlike prior work that focuses primarily on either sensing or modeling in isolat
 |--------------|----------------|------------|--------------|
 | Traditional sensor-based monitoring | Vibration sensors, temperature sensors | Expensive, invasive, difficult to scale | Low-cost, non-invasive acoustic sensing |
 | Offline acoustic anomaly detection | Autoencoder-based models on pre-recorded data (e.g., MIMII) | No real-time capability, limited deployment relevance | Supports both offline and real-time inference |
-| ML-focused approaches | DenseAE, CNN, RNN models | Focus only on model performance, ignore data acquisition challenges | Integrates sensing, modeling, and deployment |
-| Our system | Acoustic sensing + AE models + live demo | — | End-to-end, low-cost, real-time anomaly detection system |
+| Our system | Acoustic sensing + ML models + live demo | Further alignment and calibration are required | End-to-end, low-cost, real-time anomaly detection system |
 
-In summary, this project explores the feasibility of using low-cost acoustic sensing combined with machine learning for real-time HVAC fan anomaly detection, with a particular focus on bridging the gap between model development and practical system deployment.
+In summary, this project explores the feasibility of using low-cost acoustic sensing combined with machine learning for real-time HVAC fan anomaly detection, with a particular focus on bridging the gap between model development and practical system deployment. In addition, differences between embedded sensing (ESP32-based) and USB microphone setups may introduce variations in signal quality, which could affect model performance and require further calibration.
 
 ## Project Objectives
 
