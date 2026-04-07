@@ -6,22 +6,19 @@ Project progress updates are available at:
 
 [https://diosstrike.github.io/CEE-12770-Team5/](https://diosstrike.github.io/CEE-12770-Team5/)
 
-## Hardware & Materials
+## Hardware and Materials
 
-The following hardware and materials are used or planned for this project:
+Our system uses a hybrid sensing setup combining embedded hardware and external audio input devices.
 
-| Item | Purpose | Quantity | Status | Purchased by | Notes |
-|------|--------|----------|--------|--------------|-------|
-| ESP32 Development Board | Embedded audio acquisition | 1 | Purchased | Team | Used with I2S microphone |
-| INMP441 Microphone | Sound sensing (embedded setup) | 1 | Purchased | Team | Connected via I2S |
-| USB Microphone (Razer) | Real-time audio input for demo | 1 | Purchased | Zexi | Used for live inference |
-| Breadboard & Jumper Wires | Circuit prototyping | 1 set | Purchased | Team | For ESP32 wiring |
-| MicroSD Card Module | Local data storage (optional) | 1 | Purchased | Team | SPI interface |
-| MicroSD Card | Audio data storage | 1 | Purchased | Team | For recording experiments |
-| Fan (test setup) | Simulated HVAC system | 1 | Purchased | Team | Used for controlled experiments |
-| Laptop / Workstation | Model inference and visualization | 1 | Purchased | Team | Runs demo and processing |
+- **Embedded sensing**: ESP32 + INMP441 I2S microphone for low-cost, deployable audio acquisition
+- **External microphone**: USB microphone (Razer Seiren Mini) for stable real-time demo input
+- **Auxiliary components**: breadboard, jumper wires, fan setup, and optional SD card storage
 
-We use a hybrid sensing setup combining both embedded (ESP32 + INMP441) and external USB microphone pipelines.The embedded system allows exploration of low-cost, deployable sensing solutions, while the USB microphone pipeline enables stable real-time data acquisition for prototyping and demonstration.This dual setup helps us balance system realism and development efficiency.
+This hybrid design allows us to balance system realism (embedded sensing) and development stability (USB-based recording for demo and evaluation).
+
+For a detailed list of hardware, including quantities, purposes, and costs, please refer to:
+
+[Hardware and Materials List](docs/hardware.md)
 
 ## Introduction
 
