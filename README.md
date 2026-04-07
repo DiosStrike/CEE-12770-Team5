@@ -292,7 +292,6 @@ The repository also includes a standalone microphone recording script for collec
 
 This standalone utility remains useful for debugging, inspecting audio quality, and collecting real-world recordings that may later be used for fine-tuning or offline testing.
 
-## Repository Structure
 
 ## Repository Structure
 
