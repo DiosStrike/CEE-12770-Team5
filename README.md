@@ -225,8 +225,13 @@ The experiments vary across:
 
 ---
 
-For detailed experimental procedures, weekly progress, and real-world deployment setups, please refer to our project website:
-https://diosstrike.github.io/CEE-12770-Team5/
+For a detailed experimental design, including condition setup, number of runs, evaluation metrics, and planned experiments, please refer to:
+
+[Experimental Plan](docs/experimental_plan.md)
+
+For full experimental logs, weekly progress, and real-world deployment details, see:
+
+[Project Website](https://diosstrike.github.io/CEE-12770-Team5/)
 
 ## Demo Application
 
