@@ -45,12 +45,13 @@ In summary, this project explores the feasibility of using low-cost acoustic sen
 
 The main objectives of this project are:
 
-1. To detect anomalous HVAC fan behavior from acoustic signals.
-2. To implement a baseline reconstruction-based anomaly detection pipeline.
-3. To support inference across multiple machine IDs using separately trained models.
-4. To provide an interactive web-based interface for testing uploaded audio clips and live microphone input.
-5. To support real-world audio collection through a microphone recording utility.
-6. To adapt the baseline model to our own physical fan setup through a fine-tuning stage based on normal operating sounds.
+1. To develop a reconstruction-based acoustic anomaly detection model capable of identifying abnormal HVAC fan behavior.
+
+2. To build an end-to-end pipeline that integrates data acquisition, model inference, and real-time processing.
+
+3. To implement an interactive demo system that supports both offline audio analysis and real-time microphone-based anomaly detection.
+
+4. To evaluate the system under controlled experimental conditions and assess its feasibility for real-world deployment.
 
 ## Team Members
 
