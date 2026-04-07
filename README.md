@@ -183,6 +183,51 @@ If the file-level MSE is less than or equal to the threshold, the sample is clas
 
 In the fine-tuning stage, these thresholds may be re-estimated based on the score distribution of the adapted model on validation recordings from the target setup.
 
+## Experimental Design
+
+We design a series of controlled and real-world experiments to evaluate the effectiveness of our audio-based anomaly detection system for HVAC fan monitoring.
+
+### Data Sources
+- Public dataset: MIMII fan dataset for baseline model training
+- Real-world data:
+- ESP32 + INMP441 microphone recordings
+- Smartphone-recorded audio under different operating conditions
+
+### Experimental Conditions
+We consider multiple operating scenarios to reflect real-world variability:
+- Quiet environment (background noise only)
+- Fan under constant voltage (stable operation)
+- Fan under varying voltage (dynamic behavior)
+- Physically disturbed condition (partially blocked airflow)
+
+### Variables
+The experiments vary across:
+- Operating conditions (voltage, noise, obstruction)
+- Model architecture (Dense Autoencoder vs Residual Autoencoder)
+- Signal processing strategy (raw vs window-based features)
+
+### Experimental Procedure
+- Audio signals are processed into log-mel spectrogram features
+- Frame stacking is applied to capture temporal context
+- Reconstruction-based models are trained on normal data
+- Anomaly scores are computed using reconstruction error (MSE)
+
+### Baselines
+- MIMII baseline autoencoder model
+- Comparison between DenseAE and ResidualAE architectures
+- Offline audio inference vs real-time streaming inference
+
+### Evaluation Strategy
+- Statistical analysis (mean, variance, distribution)
+- Time-series behavior (rolling mean trends)
+- Qualitative separability between operating conditions
+- Real-time inference stability and responsiveness
+
+---
+
+For detailed experimental procedures, weekly progress, and real-world deployment setups, please refer to our project website:
+https://diosstrike.github.io/CEE-12770-Team5/
+
 ## Demo Application
 
 This repository includes a Gradio-based demo for interactive anomaly diagnosis.
