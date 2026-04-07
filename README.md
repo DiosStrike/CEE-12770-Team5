@@ -21,6 +21,8 @@ The following hardware and materials are used or planned for this project:
 | Fan (test setup) | Simulated HVAC system | 1 | Purchased | Team | Used for controlled experiments |
 | Laptop / Workstation | Model inference and visualization | 1 | Purchased | Team | Runs demo and processing |
 
+We use a hybrid sensing setup combining both embedded (ESP32 + INMP441) and external USB microphone pipelines.The embedded system allows exploration of low-cost, deployable sensing solutions, while the USB microphone pipeline enables stable real-time data acquisition for prototyping and demonstration.This dual setup helps us balance system realism and development efficiency.
+
 ## Overview
 
 This repository contains the implementation of our course project on HVAC fan anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from fan sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo that supports both uploaded audio analysis and live microphone streaming.
