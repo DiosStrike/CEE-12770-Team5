@@ -6,6 +6,21 @@ Project progress updates are available at:
 
 [https://diosstrike.github.io/CEE-12770-Team5/](https://diosstrike.github.io/CEE-12770-Team5/)
 
+## Hardware & Materials
+
+The following hardware and materials are used or planned for this project:
+
+| Item | Purpose | Quantity | Status | Purchased by | Notes |
+|------|--------|----------|--------|--------------|-------|
+| ESP32 Development Board | Embedded audio acquisition | 1 | Purchased | Team | Used with I2S microphone |
+| INMP441 Microphone | Sound sensing (embedded setup) | 1 | Purchased | Team | Connected via I2S |
+| USB Microphone (Razer) | Real-time audio input for demo | 1 | Purchased | Zexi | Used for live inference |
+| Breadboard & Jumper Wires | Circuit prototyping | 1 set | Purchased | Team | For ESP32 wiring |
+| MicroSD Card Module | Local data storage (optional) | 1 | Purchased | Team | SPI interface |
+| MicroSD Card | Audio data storage | 1 | Purchased | Team | For recording experiments |
+| Fan (test setup) | Simulated HVAC system | 1 | Purchased | Team | Used for controlled experiments |
+| Laptop / Workstation | Model inference and visualization | 1 | Purchased | Team | Runs demo and processing |
+
 ## Overview
 
 This repository contains the implementation of our course project on HVAC fan anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from fan sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo that supports both uploaded audio analysis and live microphone streaming.
