@@ -23,11 +23,26 @@ The following hardware and materials are used or planned for this project:
 
 We use a hybrid sensing setup combining both embedded (ESP32 + INMP441) and external USB microphone pipelines.The embedded system allows exploration of low-cost, deployable sensing solutions, while the USB microphone pipeline enables stable real-time data acquisition for prototyping and demonstration.This dual setup helps us balance system realism and development efficiency.
 
-## Overview
+## Introduction
 
-This repository contains the implementation of our course project on HVAC fan anomaly detection using audio-based machine learning. The project aims to identify abnormal operating conditions from fan sound recordings by combining a reconstruction-based anomaly detection pipeline with an interactive Gradio demo that supports both uploaded audio analysis and live microphone streaming.
+Heating, Ventilation, and Air Conditioning (HVAC) systems are critical components in modern buildings, and their reliable operation is essential for maintaining indoor comfort, energy efficiency, and system safety. Early detection of abnormal operating conditions in HVAC fans can help prevent system failures and reduce maintenance costs. Traditional monitoring approaches often rely on vibration or temperature sensors, which can be costly, invasive, and difficult to deploy at scale.
 
-At the current stage, the repository includes a baseline autoencoder inference system for uploaded audio clips, a live microphone analysis mode in the Gradio demo, and a standalone microphone-based recording script for collecting real-world sound data. In the next stage of the project, we plan to extend this baseline through fine-tuning on normal recordings collected from our own small fan setup, allowing the model to better adapt to the target acoustic environment.
+In recent years, acoustic-based anomaly detection has emerged as a promising alternative due to its non-invasive nature and lower deployment cost. Machine learning methods, particularly reconstruction-based approaches such as autoencoders, have been widely used to model normal operating sounds and detect anomalies through reconstruction error. However, most existing work focuses primarily on model performance using pre-recorded datasets and does not fully address challenges related to real-world deployment, such as data acquisition, noise robustness, and real-time inference.
+
+To address these limitations, this project adopts an end-to-end system perspective for HVAC fan anomaly detection, integrating three key components: (1) acoustic data acquisition, (2) machine learning-based anomaly detection, and (3) real-time interactive deployment. On the sensing side, we explore both embedded (ESP32 with I2S microphone) and external USB microphone setups to collect real-world audio under controlled fan conditions. On the modeling side, we implement reconstruction-based anomaly detection using both a baseline Dense Autoencoder (DenseAE) and an enhanced Residual Autoencoder (ResidualAE), trained on the MIMII dataset and adapted to our own collected data. On the deployment side, we develop an interactive Gradio-based interface that supports both offline audio analysis and real-time microphone streaming with window-based inference.
+
+Unlike prior work that focuses primarily on either sensing or modeling in isolation, our approach emphasizes the integration of low-cost sensing, machine learning, and real-time system deployment. This enables us to not only evaluate model performance but also investigate practical challenges such as signal stability, noise interference, and system responsiveness in realistic environments.
+
+### Comparison with Existing Approaches
+
+| Approach Type | Typical Methods | Limitations | Our Approach |
+|--------------|----------------|------------|--------------|
+| Traditional sensor-based monitoring | Vibration sensors, temperature sensors | Expensive, invasive, difficult to scale | Low-cost, non-invasive acoustic sensing |
+| Offline acoustic anomaly detection | Autoencoder-based models on pre-recorded data (e.g., MIMII) | No real-time capability, limited deployment relevance | Supports both offline and real-time inference |
+| ML-focused approaches | DenseAE, CNN, RNN models | Focus only on model performance, ignore data acquisition challenges | Integrates sensing, modeling, and deployment |
+| Our system | Acoustic sensing + AE models + live demo | — | End-to-end, low-cost, real-time anomaly detection system |
+
+In summary, this project explores the feasibility of using low-cost acoustic sensing combined with machine learning for real-time HVAC fan anomaly detection, with a particular focus on bridging the gap between model development and practical system deployment.
 
 ## Project Objectives
 
