@@ -4,15 +4,15 @@ This page documents the weekly progress of our 12-770 course project on acoustic
 
 At the current stage, the project has progressed through three major phases:
 
-- **Week 1:** hardware setup and sensing pipeline debugging  
-- **Week 2:** signal stabilization, preliminary analysis, and baseline model training  
-- **Week 3:** demo deployment and real-world recording experiments  
+- **Week 1-2:** hardware setup and sensing pipeline debugging  
+- **Week 3:** signal stabilization, preliminary analysis, and baseline model training  
+- **Week 4:** demo deployment and real-world recording experiments  
 
 The long-term goal of this project is to build a practical anomaly detection pipeline that can distinguish normal and abnormal fan operating conditions from sound recordings, and later adapt the system more closely to our own physical setup through fine-tuning.
 
 ---
 
-## Week 1 – Hardware Setup and Debugging
+## Week 1-2 – Hardware Setup and Debugging
 
 During the first week, the main focus was on building a functional sensing pipeline using the ESP32 and the INMP441 I2S microphone. The setup involved wiring the I2S interface (`WS`, `SCK`, `SD`), configuring the ESP32 I2S driver, and streaming acquired data through serial communication.
 
@@ -42,13 +42,13 @@ To isolate the problem, the following steps were taken:
 - Adjusted sampling rate and buffer settings
 - Tested different serial baud rates
 
-### Week 1 Outcome
+### Week 1-2 Outcome
 
-By the end of Week 1, a stable data acquisition pipeline had been established, and the microphone was confirmed to output valid non-zero signals.
+By the end of Week 2, a stable data acquisition pipeline had been established, and the microphone was confirmed to output valid non-zero signals.
 
 ---
 
-## Week 2 – Signal Stabilization, Preliminary Analysis, and Baseline Model Training
+## Week 3 – Signal Stabilization, Preliminary Analysis, and Baseline Model Training
 
 In the second week, the project moved from hardware debugging to signal quality improvement, preliminary signal validation, and the setup of the baseline anomaly detection model. The goal was not only to confirm that the sensing system could capture meaningful differences across operating conditions, but also to begin constructing the machine-learning pipeline that will later support anomaly detection.
 
@@ -159,9 +159,9 @@ The model is trained using **mean squared error (MSE)** between the input vector
 
 This makes MSE suitable both as the **training loss** and as the **anomaly score** during inference.
 
-### Week 2 Outcome
+### Week 3 Outcome
 
-By the end of Week 2, the project had achieved progress on both the sensing and modeling sides:
+By the end of Week 3, the project had achieved progress on both the sensing and modeling sides:
 
 - stabilized the signal acquisition process
 - confirmed separability among multiple operating conditions
@@ -171,7 +171,7 @@ By the end of Week 2, the project had achieved progress on both the sensing and 
 
 ---
 
-## Week 3 – Demo Deployment and Real-World Recording Experiments
+## Week 4 – Demo Deployment and Real-World Recording Experiments
 
 In the third week, the project progressed from offline analysis and baseline model setup to interactive demonstration and real-world recording validation. The main focus was on building a working demo interface, testing the model with externally recorded fan sounds, and extending the system from offline uploaded-audio analysis to browser-based live microphone inference.
 
@@ -249,7 +249,7 @@ This design provided a much more practical form of online anomaly monitoring tha
 
 This experiment was an important step toward live anomaly detection, since it moved the system closer to practical deployment rather than relying only on pre-recorded `.wav` files.
 
-### Week 3 Outcome
+### Week 4 Outcome
 
 By the end of Week 3, the project had achieved the following progress:
 
