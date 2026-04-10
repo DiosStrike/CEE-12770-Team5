@@ -2,6 +2,7 @@
 
 
 ## Repository Structure
+```
 .
 ├── code/                       # Source code for the project
 │   ├── .gradio/flagged/        # Gradio flagged data/logs
@@ -20,7 +21,7 @@
 ├── README.md                   # Project overview and instructions
 ├── pyproject.toml              # Task 1: uv project configuration and dependencies
 └── uv.lock                     # Task 1: uv lockfile for exact dependency versions
-
+```
 
 ## Project Website
 
