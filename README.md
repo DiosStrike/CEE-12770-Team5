@@ -1,5 +1,29 @@
 # HVAC Fan Anomaly Detection
 
+## Week 5 Progress Update (2026-04-13)
+This week focused on two major efforts: (1) completing the experimental evaluation pipeline and (2) refining the project's problem statement around **domain shift in acoustic anomaly detection**.
+### What We Did
+**Cross-Model Transfer Evaluation** — Evaluated all 4 pretrained MIMII baseline autoencoders (id_00, id_02, id_04, id_06) on our 180-sample target dataset. Compared AUC, F1, threshold behavior, and MSE distributions across conditions, voltages, and noise environments.
+**Latent Feature Analysis & Multi-Class Classification** — Extracted 8-dim bottleneck features from the best model (id_04), performed t-SNE visualization and per-dimension analysis, and ran 3-class classification (normal / blocked / imbalance) using SVM, Random Forest, and KNN with 5-fold cross-validation.
+**Fine-Tuning with Architecture Modification** — Replaced the bottleneck ReLU with LeakyReLU to address dead neurons, and fine-tuned the autoencoder on our 60 normal-condition samples. Re-evaluated all metrics and compared with the frozen baseline.
+### Key Results
+| Metric | Baseline (frozen) | Fine-tuned | Change |
+|--------|-------------------|------------|--------|
+| AUC (binary) | 0.769 | **0.997** | +0.228 |
+| Best F1 (binary) | 0.846 | **0.984** | +0.138 |
+| Optimal threshold | 38.18 | **7.56** | Back to source-domain scale |
+| Active latent dims | 2/8 | **4/8** | +2 dims activated |
+| 3-class accuracy (RF, 5-fold CV) | 95.0% | 95.0% | Maintained |
+### Key Conclusions
+1. **Domain shift is extreme but recoverable**: Threshold shifts 5-10x between source and target domain, but fine-tuning restores near-perfect detection.
+2. **Source-domain best ≠ transfer best**: id_06 (best on source, F1=0.910) transferred poorly; id_04 (mediocre on source, F1=0.731) transferred best.
+3. **Only 2/8 latent dimensions are active** in the pretrained model due to ReLU dead neurons; LeakyReLU activates 2 more.
+4. **Multi-class fault diagnosis is feasible** from pretrained latent features without any supervised training (95% CV accuracy).
+5. **Latent space encodes hierarchical structure**: condition at the coarse level, voltage at the fine level; noise-robust.
+### Where to Find Details
+- Full experimental and evaluation report: [`report/Experimental_And_Evaluation_Report.tex`](report/Experimental_And_Evaluation_Report.tex)
+- Detailed weekly progress and figures: [Project Website — Week 5](https://diosstrike.github.io/CEE-12770-Team5/)
+---
 
 ## Repository Structure
 ```
