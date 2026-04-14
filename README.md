@@ -109,13 +109,19 @@ In summary, this project explores the feasibility of using low-cost acoustic sen
 
 The main objectives of this project are:
 
-1. To develop a reconstruction-based acoustic anomaly detection model capable of identifying abnormal HVAC fan behavior.
+1. To evaluate and quantify the impact of extreme cross-hardware domain shift on pretrained acoustic anomaly detection models.
 
-2. To build an end-to-end pipeline that integrates data acquisition, model inference, and real-time processing.
+2. To develop domain adaptation strategies (fine-tuning, architecture modification) that recover detection performance under severe domain mismatch.
+  
+3. To explore multi-class fault diagnosis (normal / blocked / imbalance) using latent representations from the autoencoder bottleneck.
 
-3. To implement an interactive demo system that supports both offline audio analysis and real-time microphone-based anomaly detection.
+4. To develop a reconstruction-based acoustic anomaly detection model capable of identifying abnormal HVAC fan behavior.
 
-4. To evaluate the system under controlled experimental conditions and assess its feasibility for real-world deployment.
+5. To build an end-to-end pipeline that integrates data acquisition, model inference, and real-time processing.
+
+6. To implement an interactive demo system that supports both offline audio analysis and real-time microphone-based anomaly detection.
+
+7. To evaluate the system under controlled experimental conditions and assess its feasibility for real-world deployment.
 
 ## Team Members
 
@@ -125,11 +131,11 @@ The main objectives of this project are:
 
 ## Project Roadmap
 
-The project is currently organized into two stages.
+The project is organized into three stages.
 
-### Stage 1: Baseline System
+### Stage 1: Baseline System (Completed)
 
-The current repository focuses on a baseline anomaly detection workflow:
+The current repository includes a baseline anomaly detection workflow:
 
 - audio preprocessing and log-mel feature extraction
 - reconstruction-based anomaly scoring
@@ -138,20 +144,25 @@ The current repository focuses on a baseline anomaly detection workflow:
 - live microphone streaming for real-time analysis
 - real-world audio recording through a microphone utility
 
-This stage establishes the end-to-end pipeline and provides a deployable demonstration environment for testing uploaded recordings and live audio input.
+### Stage 2: Transfer Evaluation & Fine-Tuning (Current — Week 5)
 
-### Stage 2: Fine-Tuning for the Real Fan Setup
+This stage evaluates and adapts the pretrained models to our target hardware:
 
-The next stage of the project is to adapt the anomaly detector to our own experimental fan hardware.
+- Cross-model transfer evaluation across 4 MIMII pretrained autoencoders
+- Source-domain vs. target-domain performance comparison
+- Latent feature analysis (t-SNE, per-dimension activation, multi-class classification)
+- Architecture modification (ReLU → LeakyReLU at bottleneck)
+- Fine-tuning on target-domain normal data (60 samples)
+- Comprehensive before/after comparison (AUC: 0.769 → 0.997)
 
-The planned fine-tuning workflow is:
+### Stage 3: Multi-Task Learning & Edge Deployment (Planned)
 
-1. Collect normal audio recordings from our small fan under real operating conditions.
-2. Use these normal recordings to continue training the existing reconstruction model for a small number of epochs.
-3. Preserve previously learned generic acoustic structure while improving adaptation to the target device and environment.
-4. Continue using reconstruction error as the anomaly score during deployment.
+The next stage extends the system toward supervised fault diagnosis and edge deployment:
 
-The purpose of this stage is to reduce the mismatch between the baseline training domain and the actual sound characteristics of our real fan setup.
+1. Attach a classification head to the bottleneck layer for end-to-end multi-class training.
+2. Joint reconstruction + classification loss to enable dual-purpose anomaly detection and fault diagnosis.
+3. Migrate from USB microphone to ESP32 + INMP441 I2S MEMS module for edge deployment.
+4. Evaluate the additional sensor-grade domain shift introduced by embedded hardware.
 
 ## Methodology
 
@@ -202,6 +213,8 @@ ReLU is used in the hidden layers to provide nonlinear representation capacity, 
 
 The bottleneck layer contains only 8 dimensions. This narrow latent space forces the model to retain only the most salient structure of normal acoustic patterns. As a result, abnormal sounds are generally harder to reconstruct accurately.
 
+**Architecture finding (Week 5)**: Latent analysis revealed that only 2 of 8 bottleneck dimensions are active in the pretrained model due to ReLU-induced dead neurons. Replacing the bottleneck ReLU with LeakyReLU (negative slope = 0.01) and fine-tuning on target-domain data activated 2 additional dimensions, improving anomaly detection AUC from 0.769 to 0.997.
+
 The current training data for the baseline model are based on the **fan** audio subset provided in the MIMII baseline dataset repository:
 
 - https://github.com/MIMII-hitachi/mimii_baseline/blob/master/dataset/7z.sh
@@ -245,7 +258,9 @@ The current demo uses fixed thresholds for the four machine IDs:
 
 If the file-level MSE is less than or equal to the threshold, the sample is classified as normal. Otherwise, it is classified as anomalous.
 
-In the fine-tuning stage, these thresholds may be re-estimated based on the score distribution of the adapted model on validation recordings from the target setup.
+In the fine-tuning stage, these thresholds may be re-estimated based on the score distribution of the adapted model on validation recordings from the target setup. 
+**Domain shift finding (Week 5)**: These source-domain thresholds are completely invalid on our target data — all target-domain MSE values far exceed the source thresholds (35–73 vs. 5–7), causing 100% false positive rate. After fine-tuning, the optimal threshold returned to 7.56, matching the source-domain scale and confirming successful domain adaptation.
+
 
 ## Experimental Design
 
@@ -253,8 +268,8 @@ We design a series of controlled and real-world experiments to evaluate the effe
 
 ### Data Sources
 - Public dataset: MIMII fan dataset for baseline model training
-- Real-world data:
-- ESP32 + INMP441 microphone recordings
+- Real-world data: 180 recordings collected with USB microphone under controlled conditions
+  - 3 conditions (normal, blocked, imbalance) × 3 voltages (4V, 8V, 12V) × 2 noise environments × 10 runs
 - Smartphone-recorded audio under different operating conditions
 
 ### Experimental Conditions
@@ -282,10 +297,13 @@ The experiments vary across:
 - Offline audio inference vs real-time streaming inference
 
 ### Evaluation Strategy
-- Statistical analysis (mean, variance, distribution)
-- Time-series behavior (rolling mean trends)
-- Qualitative separability between operating conditions
-- Real-time inference stability and responsiveness
+- Source-domain vs. target-domain performance comparison
+- Cross-model transfer evaluation (4 pretrained models)
+- Threshold-free AUC as primary separability metric
+- F1-maximizing threshold search on target data
+- Latent feature analysis (t-SNE, per-dimension activation)
+- Multi-class classification with cross-validation (SVM, RF, KNN)
+- Before/after fine-tuning comparison
 
 ---
 
