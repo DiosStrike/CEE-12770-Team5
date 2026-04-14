@@ -7,6 +7,7 @@ At the current stage, the project has progressed through three major phases:
 - **Week 1-2:** hardware setup and sensing pipeline debugging  
 - **Week 3:** signal stabilization, preliminary analysis, and baseline model training  
 - **Week 4:** demo deployment and real-world recording experiments  
+- **Week 5:** cross-model transfer evaluation, latent analysis, fine-tuning, and problem reframing around domain shift
 
 The long-term goal of this project is to build a practical anomaly detection pipeline that can distinguish normal and abnormal fan operating conditions from sound recordings, and later adapt the system more closely to our own physical setup through fine-tuning.
 
@@ -263,6 +264,80 @@ By the end of Week 3, the project had achieved the following progress:
 
 ---
 
+## Week 5 – Transfer Evaluation, Latent Analysis, and Domain Shift Reframing
+
+In Week 5, the project shifted from demo development to systematic model evaluation and problem reframing. The main focus was on two parallel efforts: (1) completing a full experimental evaluation pipeline — including cross-model transfer evaluation, latent feature analysis, and fine-tuning with architecture modification — and (2) reframing the project's core problem around **domain shift in acoustic anomaly detection**, informed by a review of the DCASE literature.
+
+### Problem Reframing: Domain Shift
+
+Through reviewing the DCASE challenge literature (Wilkinghoff et al., 2025), we identified that our project addresses a domain shift scenario that is substantially more extreme than existing DCASE benchmarks. While DCASE studies typically vary 1–2 factors within the same recording infrastructure, our setup changes **all factors simultaneously**:
+
+| | MIMII Source | DCASE Target | Our Target |
+|---|---|---|---|
+| Fan | Industrial fan | Same type, different unit | Wathai 120mm AC axial fan |
+| Microphone | TAMAGO-03 array, 8-ch | Same | Razer Seiren V3 Mini, 1-ch |
+| Mic grade | Research-grade | Same | Consumer USB |
+| Noise | Post-hoc mix at exact SNR | Same method, different SNR | Natural ambient (uncontrolled) |
+| Environment | Hitachi lab, Japan | Same facility | Different facility |
+| **Factors changed** | — | 1–2 | **All simultaneously** |
+| **Threshold shift** | — | ~1.5–3x | **~5–10x** |
+
+This reframing sharpened the project narrative: we are not just "doing anomaly detection," but specifically evaluating whether domain adaptation methods remain effective under extreme cross-hardware domain shift — a scenario that is underexplored in the literature but highly relevant to real-world deployment.
+
+### Cross-Model Transfer Evaluation
+
+We evaluated all 4 pretrained MIMII baseline autoencoders (id_00, id_02, id_04, id_06) on our 180-sample target dataset (3 conditions × 3 voltages × 2 noise environments × 10 runs).
+
+Key findings:
+- **id_04** achieved the best transfer performance (AUC = 0.769, F1 = 0.846)
+- Source-domain performance **does not predict** transfer performance: id_06 (best on source, F1 = 0.910) transferred poorly (F1 = 0.818), while id_04 (mediocre on source, F1 = 0.731) transferred best
+- Optimal thresholds shifted by 5–10x (source ~5–7 vs. target ~35–58), confirming extreme domain mismatch
+- The condition ranking (imbalance > blocked > normal in MSE) was consistent across all 4 models
+
+We also compared source-domain results (from classmate's evaluation on original MIMII test data) with our target-domain results, providing a direct quantification of domain shift severity.
+
+### Latent Feature Analysis & Multi-Class Classification
+
+Using the best model (id_04), we extracted the 8-dimensional bottleneck representations and performed:
+
+- **Per-dimension analysis**: Discovered that **only 2 of 8 latent dimensions (z0 and z7) are active**; z1–z6 are dead (zero-valued) due to ReLU activation at the bottleneck
+- **t-SNE visualization**: Revealed a hierarchical latent structure — condition (normal/blocked/imbalance) at the coarse level, voltage (4V/8V/12V) at the fine level, with noise environment (quiet/noise) well-mixed within clusters (indicating noise robustness)
+- **Multi-class classification**: Random Forest achieved **95.0% 3-class accuracy** (5-fold CV) on the 8-dim latent features without any fine-tuning or supervised training — demonstrating that the pretrained encoder already encodes condition-discriminative information
+
+![t-SNE by Condition](images/tsne_by_condition_id_04.png)
+![t-SNE by Voltage](images/tsne_by_voltage_id_04.png)
+![Latent Dimensions](images/latent_dimensions_by_condition_id_04.png)
+
+### Fine-Tuning with Architecture Modification
+
+Based on the dead-neuron finding, we made a single architectural change (bottleneck ReLU → LeakyReLU) and fine-tuned the autoencoder on our 60 normal-condition samples (48 train / 12 val), using only MSE reconstruction loss.
+
+Results:
+
+| Metric | Baseline (frozen) | Fine-tuned | Change |
+|--------|-------------------|------------|--------|
+| AUC (binary) | 0.769 | **0.997** | +0.228 |
+| Best F1 (binary) | 0.846 | **0.984** | +0.138 |
+| Optimal threshold | 38.18 | **7.56** | Back to source-domain scale |
+| Active latent dims | 2/8 | **4/8** | +2 dims activated |
+| 3-class accuracy (RF) | 95.0% | 95.0% | Maintained |
+
+The threshold returning from 38.18 to 7.56 (matching the source-domain scale of 5–7) is direct evidence that fine-tuning successfully eliminated the domain shift. The newly activated dimension z2 shows clear condition-dependent variation, providing additional discriminative information.
+
+![Training Curves](images/training_curves_finetuned.png)
+![Latent Dims Fine-tuned](images/latent_dimensions_by_condition_finetuned.png)
+![t-SNE Fine-tuned](images/tsne_by_condition_finetuned.png)
+
+### Week 5 Outcome
+
+- Completed cross-model transfer evaluation across 4 pretrained models with source-vs-target comparison
+- Discovered that 6/8 bottleneck dimensions are dead in the pretrained model
+- Demonstrated 95% 3-class fault classification from pretrained latent features
+- Achieved near-perfect anomaly detection (AUC = 0.997) through fine-tuning + LeakyReLU
+- Reframed the project problem around extreme cross-hardware domain shift, differentiating from DCASE literature
+- Produced a comprehensive experimental report (LaTeX) covering all findings
+
+
 ## Summary of Progress So Far
 
 Across the first three weeks, the project has achieved the following milestones:
@@ -276,17 +351,23 @@ Across the first three weeks, the project has achieved the following milestones:
 - built an interactive demo for reconstruction-based anomaly detection
 - tested the system with smartphone-recorded fan audio under multiple voltage conditions
 - implemented rolling-window live microphone analysis in the demo
+- completed cross-model transfer evaluation (4 MIMII models) and identified id_04 as best-transferring
+- discovered 6/8 latent bottleneck dimensions are dead due to ReLU; only 2 dimensions carry information
+- demonstrated 95% three-class fault classification from pretrained latent features without supervised training
+- fine-tuned with LeakyReLU bottleneck modification, recovering AUC from 0.769 to 0.997
+- reframed project problem around extreme cross-hardware domain shift (5–10x threshold shift vs. DCASE's 1.5–3x)
+- produced comprehensive experimental and evaluation report in LaTeX
 
 ## Next Steps
 
-The next phase of the project will focus on improving the connection between real-world recordings and the anomaly detection model. Planned directions include:
+The next phase of the project will focus on:
 
-- collecting more real fan recordings under controlled normal and abnormal conditions
-- refining the current demo workflow
-- improving consistency between offline recordings and real-time inference
-- fine-tuning the baseline model on target-domain normal audio
-- updating thresholds after model adaptation
+- **Stage 2 multi-task learning**: attaching a classification head to the bottleneck for end-to-end 3-class training (reconstruction + classification joint loss)
+- **Ablation experiments**: separating the contributions of LeakyReLU vs. fine-tuning to understand each factor's impact
+- **Additional DA method comparison**: testing domain-specific score normalization and Mahalanobis distance against fine-tuning
+- **ESP32 + INMP441 deployment**: migrating from USB microphone to embedded MEMS module and evaluating the additional sensor-grade domain shift
 - preparing final report, poster, and demonstration materials
+
 
 # What We Learned:
 
@@ -303,3 +384,6 @@ My primary focus was building and training the anomaly detection models using th
 ### **Zexi Yin**:
 
 My key learning revolved around the complexities of real-time acoustic data acquisition. Initially building an ESP32 + INMP441 system, I spent significant time debugging issues like discontinuous signals and serial bandwidth bottlenecks at high sampling rates, eventually pivoting to SD card local storage. To ensure our demo progressed smoothly, I engineered a stable PC-based USB microphone pipeline featuring real-time recording and waveform/spectrogram visualization. Resolving buffer and shape mismatch errors taught me how to effectively manage audio data structures. Ultimately, transitioning from offline audio to window-sliced real-time streaming was a crucial structural agreement our team reached this week.
+
+My key learning this phase evolved from hardware debugging to systematic model evaluation and research methodology. Building on the ESP32 + INMP441 sensing pipeline from earlier weeks, in Week 5 I led the experimental evaluation effort: designing and executing the cross-model transfer evaluation across 4 pretrained MIMII autoencoders, performing latent feature analysis (t-SNE, per-dimension activation, multi-class classification), and implementing the fine-tuning pipeline with LeakyReLU architectural modification. A critical insight was discovering that 6 of 8 bottleneck dimensions were dead due to ReLU — a finding that directly motivated the architecture change and led to AUC improving from 0.769 to 0.997. Through reviewing the DCASE domain shift literature, I also helped reframe the project's core narrative: we are not just doing anomaly detection, but specifically validating domain adaptation under extreme cross-hardware shift — a scenario substantially more severe than existing DCASE benchmarks. This experience taught me how to connect experimental findings to a broader research context and articulate what makes our work different.
+
