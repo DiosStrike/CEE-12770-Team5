@@ -21,7 +21,7 @@ This week focused on two major efforts: (1) completing the experimental evaluati
 4. **Multi-class fault diagnosis is feasible** from pretrained latent features without any supervised training (95% CV accuracy).
 5. **Latent space encodes hierarchical structure**: condition at the coarse level, voltage at the fine level; noise-robust.
 ### Where to Find Details
-- Full experimental and evaluation report: [`report/Experimental_And_Evaluation_Report.tex`](report/Experimental And Evaluation Report.tex)
+- Full experimental and evaluation report: [`report/Experimental_And_Evaluation_Report.tex`](report/Experimental_And_Evaluation_Report.tex)
 - Detailed weekly progress and figures: [Project Website — Week 5](https://diosstrike.github.io/CEE-12770-Team5/)
 ---
 
