@@ -70,7 +70,29 @@ For a detailed list of hardware, including quantities, purposes, and costs, plea
 
 ## Introduction
 
-Traditional HVAC condition monitoring typically relies on vibration or temperature sensors, which require physical installation, increase deployment cost, and are difficult to scale in real-world build ing environments. In this project, we explore the use of acoustic sensing as a non-invasive and low-cost alternative. However, existing acoustic diagnostic methods often rely on computation ally heavy offline analysis and high-fidelity equipment, leaving a gap between laboratory analysis and practical real-time deployment. To address this gap, the core innovation of our project is an edge-deployable, end-to-end acoustic anomaly detection workflow. This workflow combines reconstruction-based modeling, low-cost ESP32/I2S microphone hardware, and live microphone in ference. Instead of merely conducting offline evaluations, we aim to demonstrate the feasibility of performing live inference directly at the edge, evaluating its advantages and limitations in practical applications
+Traditional HVAC condition monitoring relies on vibration or temperature sensors, which require physical installation and per-unit instrumentation that is expensive to scale. Acoustic monitoring offers a non-invasive alternative: a single microphone can capture fan operational sound and detect deviations from normal behavior. The MIMII dataset and the annual DCASE challenges have established autoencoder-based reconstruction error as a baseline for unsupervised anomalous sound detection (ASD).
+
+### The Core Problem: Domain Shift
+
+The central challenge for practical ASD deployment is **domain shift** — when the acoustic characteristics of the deployment environment differ from the training environment, detection performance degrades significantly. While the DCASE community has studied this problem since 2021, existing benchmarks only address **controlled** domain shifts (e.g., changing microphone position or noise level within the same recording setup).
+
+**Our study addresses a far more extreme scenario**: deploying a model trained in one laboratory onto a completely different fan, microphone, and environment. The table below highlights this difference:
+
+| | MIMII Source | DCASE Target | Our Target |
+|---|---|---|---|
+| Fan | Industrial fan | Same type, different unit | Wathai 120mm AC axial fan |
+| Microphone | TAMAGO-03 array, 8-ch | Same | Razer Seiren V3 Mini, 1-ch |
+| Mic grade | Research-grade | Same | Consumer USB |
+| Noise | Post-hoc mix at exact SNR | Same method, different SNR | Natural ambient (uncontrolled) |
+| Environment | Hitachi lab, Japan | Same facility | Different facility |
+| **Factors changed** | — | 1–2 | **All simultaneously** |
+| **Threshold shift** | — | ~1.5–3x | **~5–10x** |
+
+This cross-hardware, cross-environment domain shift is qualitatively different from — and substantially more severe than — controlled DCASE benchmarks, yet it represents the scenario most likely encountered in practice.
+
+Our long-term goal is to push even further toward edge deployment by replacing the USB microphone with an ESP32 + INMP441 I2S MEMS module, introducing an additional sensor-grade shift on top of the already extreme mismatch studied here.
+
+For the full literature review and domain shift analysis, see the [project report](report/Experimental_And_Evaluation_Report.tex) and the [project website](https://diosstrike.github.io/CEE-12770-Team5/).
 
 ### Comparison with Existing Approaches
 
