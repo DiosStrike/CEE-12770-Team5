@@ -1,0 +1,512 @@
+\documentclass[sigconf]{acmart}
+
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+\setcopyright{none}
+
+\begin{document}
+
+\title{Acoustic Anomaly Detection for HVAC Fan Systems under Extreme Cross-Hardware Domain Shift}
+
+\author{Tanghao Chen}
+\email{tanghaoc@andrew.cmu.edu}
+\affiliation{\institution{Carnegie Mellon University}\country{USA}}
+
+\author{Yizhen Xu}
+\email{yizhenxu@andrew.cmu.edu}
+\affiliation{\institution{Carnegie Mellon University}\country{USA}}
+
+\author{Zexi Yin}
+\email{zexiyin@andrew.cmu.edu}
+\affiliation{\institution{Carnegie Mellon University}\country{USA}}
+
+\begin{abstract}
+Acoustic anomaly detection systems trained on laboratory datasets often face significant performance degradation when deployed on new hardware in real-world environments, a challenge known as domain shift. Existing work in the DCASE community has studied this problem under controlled conditions, where only 1--2 factors change within the same recording infrastructure, producing threshold shifts of 1.5--3x. However, practical deployment requires transferring across entirely different machines, microphones, and environments simultaneously, a far more extreme scenario that remains largely unexplored.
+
+In this study, we bridge this gap by deploying four pretrained MIMII baseline autoencoders onto a custom-collected HVAC fan dataset that differs from the source domain in every dimension: different fan hardware, different microphone (consumer USB vs.\ research-grade 8-channel array), different facility, and naturally occurring noise instead of synthetically controlled SNR. This produces threshold shifts of 5--10x, an order of magnitude more severe than DCASE benchmarks.
+
+Our work yields three findings that go beyond existing literature. First, we discover that source-domain performance does not predict transfer performance: the best source-domain model (F1 = 0.910) transfers poorly, while a mediocre model (F1 = 0.731) transfers best, a counterintuitive result suggesting that source-domain overfitting harms cross-hardware generalization. Second, we show that a simple fine-tuning strategy combined with a targeted architectural fix (ReLU to LeakyReLU at the bottleneck to address dead neurons) recovers near-perfect detection (AUC: 0.769 to 0.997), with the optimal threshold returning to the source-domain scale, directly confirming successful domain alignment. Third, we demonstrate that the autoencoder's latent bottleneck supports 95\% three-class fault classification (normal, blocked, imbalance) without any supervised training, extending acoustic anomaly detection from binary detection to multi-class fault diagnosis, a direction not explored in existing DCASE literature.
+\end{abstract}
+
+\keywords{anomalous sound detection, domain shift, domain adaptation, HVAC fan, autoencoder, multi-class classification}
+
+\maketitle
+
+\section{Introduction}
+
+Heating, ventilation, and air conditioning (HVAC) systems are critical infrastructure in modern buildings. Fan units within these systems are susceptible to mechanical faults such as blade imbalance and airflow blockage. Traditional condition monitoring relies on dedicated vibration sensors, which are expensive and difficult to scale.
+
+Acoustic monitoring offers a non-invasive alternative: a single microphone can capture fan operational sound and detect deviations from normal behavior. The MIMII dataset~\cite{purohit2019mimii} established autoencoder-based reconstruction error as a baseline for unsupervised anomalous sound detection (ASD). The DCASE challenges~\cite{wilkinghoff2025domainshift} subsequently identified domain shift as the central obstacle to practical ASD deployment.
+
+\subsection{The Domain Shift Problem}
+
+Domain shift in ASD arises when the deployment environment differs from the training environment. Wilkinghoff et al.~\cite{wilkinghoff2025domainshift} showed that this can invalidate decision thresholds and degrade detection performance. However, the domain shifts studied in DCASE benchmarks are relatively controlled: they involve changes in microphone position, noise level, or machine parameters within the same recording infrastructure.
+
+In real-world deployment, the domain shift is far more extreme. Table~\ref{tab:domainshift} compares the controlled DCASE shifts with our cross-hardware shift.
+
+\begin{table*}[t]
+\centering
+\caption{Domain shift comparison: DCASE benchmarks vs.\ our study.}
+\label{tab:domainshift}
+\begin{tabular}{l l l l}
+\toprule
+& MIMII Source & DCASE Target & Our Target \\
+\midrule
+Fan & Industrial fan & Same type, diff.\ unit & Wathai 120mm AC axial fan \\
+Microphone & TAMAGO-03 array, 8-ch & Same & Razer Seiren V3 Mini, 1-ch \\
+Mic grade & Research-grade & Same & Consumer USB \\
+Noise & Post-hoc mix at exact SNR & Same method, diff.\ SNR & Natural ambient (uncontrolled) \\
+Environment & Hitachi lab, Japan & Same facility & Different facility \\
+\midrule
+Factors changed & -- & 1--2 & All simultaneously \\
+Threshold shift & -- & 1.5--3x & 5--10x \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Our long-term goal is to further push toward edge deployment by replacing the USB microphone with an ESP32 + INMP441 I2S MEMS module.
+
+\subsection{Contributions}
+
+Our contributions are: (1) We quantify extreme domain shift, showing 5--10x threshold shifts and that source-domain performance does not predict transfer performance. (2) We show that fine-tuning with a LeakyReLU modification recovers near-perfect detection (AUC 0.769 to 0.997). (3) We demonstrate that the pretrained bottleneck supports 95\% three-class fault classification without supervised training, a direction unexplored in DCASE literature.
+
+\section{Related Work}
+
+\subsection{Acoustic Anomaly Detection Datasets}
+
+The MIMII dataset~\cite{purohit2019mimii} introduced 26,092 normal-condition sound segments across four machine types. Each machine type includes seven individual units (id\_00 through id\_06), and background noise from real factories is mixed at controlled SNR levels. The baseline autoencoder achieves average AUC of 0.94 for fans at 6 dB SNR. Subsequent datasets (MIMII DUE, ToyADMOS2) extended MIMII to domain-shifted conditions.
+
+\subsection{Domain Shift in DCASE Challenges}
+
+DCASE 2021 Task 2~\cite{kawaguchi2021dcase} introduced the domain adaptation (DA) setting with only 3 target-domain normal samples. DCASE 2022 shifted to domain generalization (DG). Wilkinghoff et al.~\cite{wilkinghoff2025domainshift} categorize approaches into: (1) Domain Specialization, (2) Domain-invariant Representations, (3) Feature Disentanglement, and (4) Anomaly Score Calculation.
+
+\subsection{Gaps in Existing Work}
+
+All DCASE studies operate within the same recording infrastructure. Cross-hardware, cross-environment transfer remains unexplored. Additionally, multi-class fault diagnosis from latent representations has not been investigated. Our work addresses both gaps.
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+\subsection{Dataset Design}
+
+We collect audio recordings from a single HVAC-like fan unit (Wathai 120mm AC axial fan) under a factorial experimental design that systematically varies three factors:
+
+\begin{itemize}
+    \item \textbf{Operating conditions} (3 levels): \emph{normal} (healthy fan operation), \emph{blocked} (a board placed in front of the fan to partially obstruct the inlet airflow), and \emph{imbalance} (an additional weight attached to one blade to simulate rotational imbalance).
+    \item \textbf{Supply voltage} (3 levels): 4V, 8V, and 12V, corresponding to low, medium, and high fan speeds. This allows us to evaluate whether the anomaly detection system generalizes across different operating speeds.
+    \item \textbf{Noise environment} (2 levels): \emph{quiet} (low ambient background noise) and \emph{noise} (elevated background noise from nearby equipment). This tests robustness to environmental acoustic variation.
+\end{itemize}
+
+For each combination, 10 independent recordings are collected, yielding a total of $3 \times 3 \times 2 \times 10 = 180$ audio files. Each recording is exactly 10 seconds long, captured at 16 kHz sample rate, mono channel, using a Razer Seiren V3 Mini USB microphone positioned at a fixed distance from the fan. All recordings are saved as 16-bit WAV files.
+
+\subsection{Recording Protocol}
+
+A custom Python recording pipeline automates the data collection process. The pipeline provides configurable parameters for condition, voltage, noise level, and run number, and automatically organizes files into a hierarchical directory structure:
+
+\begin{verbatim}
+raw_audio/{condition}/{voltage}/{noise}/
+  {condition}_{voltage}_{noise}_run{XX}.wav
+\end{verbatim}
+
+For example: \texttt{blocked\_8V\_noise\_run03.wav}. Metadata (condition, voltage, noise, run number) is embedded in the filename and parsed automatically during evaluation, eliminating the need for separate metadata files.
+
+\subsection{Label Definition}
+
+We define two labeling schemes for different evaluation tasks:
+
+\begin{itemize}
+    \item \textbf{Binary anomaly detection}: normal = 0 (60 samples), abnormal = 1 (120 samples combining blocked and imbalance). This follows the standard ASD paradigm where the task is to detect any deviation from normal operation.
+    \item \textbf{Multi-class fault diagnosis}: normal, blocked, and imbalance as three separate classes (60 samples each). This extends beyond standard ASD to identify the specific type of fault.
+\end{itemize}
+
+The class imbalance in the binary setting (1:2 ratio) reflects a design choice: we prioritize having two distinct anomaly types over class balance, as the multi-class analysis is a key contribution.
+
+\subsection{Evaluation Metrics and Methodology}
+
+Our evaluation framework addresses three complementary aspects of model performance: anomaly ranking, threshold-based classification, and latent space analysis.
+
+\subsubsection{Anomaly Ranking: AUC}
+
+We use the Area Under the ROC Curve (AUC) as the primary threshold-free metric. AUC measures how well the model ranks anomalous samples above normal samples, regardless of the specific decision threshold. This is particularly important in our domain shift setting, where source-domain thresholds are invalid: even if the absolute MSE scale changes dramatically across domains, the relative ranking may be preserved. A high AUC indicates that the model's learned representation captures meaningful differences between normal and abnormal sounds, even under domain shift.
+
+\subsubsection{Threshold-Based Classification: F1, Precision, Recall}
+
+For practical deployment, a binary decision (normal vs.\ anomalous) requires a threshold. We find the optimal threshold by sweeping all candidate values on the precision-recall curve and selecting the one that maximizes the F1 score. We then report accuracy, precision, recall, and F1 at this threshold. Comparing the optimal threshold across source and target domains directly quantifies the magnitude of domain shift: a large threshold gap indicates that the model's reconstruction error scale has shifted substantially.
+
+\subsubsection{Latent Space Analysis: t-SNE and Per-Dimension Inspection}
+
+To understand what the autoencoder has learned internally, we extract the 8-dimensional bottleneck representation for each audio file. For each file, we pass all frame-level feature vectors through the encoder and compute the temporal mean to obtain a single 8-dimensional vector per file.
+
+We analyze these representations in two ways:
+
+\begin{itemize}
+    \item \textbf{Per-dimension boxplots}: We inspect each of the 8 latent dimensions individually, grouped by operating condition. This reveals which dimensions are active (carrying meaningful variation) versus dead (producing constant or zero values), and whether active dimensions show condition-dependent patterns.
+    \item \textbf{t-SNE visualization}: We apply t-SNE (t-distributed Stochastic Neighbor Embedding) to project the 8-dimensional latent vectors into 2D for visual inspection. t-SNE preserves local neighborhood structure, making it suitable for identifying cluster patterns. We color the resulting scatter plots by condition, voltage, and noise environment to assess whether the latent space encodes physically meaningful structure. We use perplexity = 30 and PCA initialization for reproducibility.
+\end{itemize}
+
+t-SNE provides qualitative insight but cannot quantify separability. We therefore complement it with classification experiments.
+
+\subsubsection{Multi-Class Classification: Cross-Validated Accuracy}
+
+To quantitatively assess the discriminative power of the latent representations, we train three standard classifiers (SVM with RBF kernel, Random Forest, and KNN with $k$=5) on the 8-dimensional latent mean vectors using 3-class labels (normal, blocked, imbalance). All classifiers use 5-fold stratified cross-validation with standardized features (zero mean, unit variance). We report accuracy, macro-averaged F1, precision, and recall. Using multiple classifiers ensures that the results reflect the quality of the features rather than the choice of a specific classifier.
+
+\subsubsection{Why MSE as Anomaly Score}
+
+We use mean squared error (MSE) between the input feature vector and the reconstructed output as the anomaly score, following the original MIMII baseline~\cite{purohit2019mimii}. The rationale is:
+
+\begin{itemize}
+    \item The autoencoder is trained exclusively on normal sounds, so it learns to reconstruct normal acoustic patterns with low error.
+    \item Anomalous sounds (blocked, imbalance) produce acoustic patterns that differ from the training distribution, resulting in higher reconstruction error.
+    \item MSE provides a continuous, interpretable score: the magnitude directly reflects how much the input deviates from learned normal patterns.
+    \item For a given audio file, MSE is computed per frame and averaged across all frames ($\sim$300 per 10-second file), providing a robust file-level score that smooths out local fluctuations.
+\end{itemize}
+
+\section{Baseline Model and Feature Extraction}
+\label{sec:baseline}
+
+\subsection{Feature Extraction Pipeline}
+
+Following the MIMII baseline~\cite{purohit2019mimii}, we extract acoustic features through the following pipeline:
+
+\begin{enumerate}
+    \item \textbf{Audio loading}: Load the WAV file at native sample rate (16 kHz), mono channel.
+    \item \textbf{Mel spectrogram}: Compute a 64-band Mel spectrogram using a 1024-point FFT with hop length 512. This maps the linear frequency axis to the perceptually-motivated Mel scale, producing a compact time-frequency representation.
+    \item \textbf{Log compression}: Convert to log-mel energy: $S_{\text{log}} = (20/p) \cdot \log_{10}(S + \epsilon)$, where $p = 2.0$ and $\epsilon$ prevents numerical underflow. This compresses the dynamic range, making the features more suitable for neural network processing.
+    \item \textbf{Frame stacking}: Concatenate 5 consecutive spectral frames to form a single input vector. With 64 Mel bands per frame, this produces a 320-dimensional vector ($64 \times 5 = 320$) that captures short-term temporal context rather than relying on a single instantaneous spectral snapshot.
+\end{enumerate}
+
+Each 10-second audio file yields approximately 300 frame-level vectors. During inference, the reconstruction error is computed for each vector independently, and the frame-level MSE values are averaged to produce a single file-level anomaly score.
+
+\subsection{Autoencoder Architecture}
+
+The baseline model is a fully-connected autoencoder with symmetric encoder and decoder (Table~\ref{tab:arch}). The encoder progressively compresses the 320-dimensional input to an 8-dimensional bottleneck through two hidden layers of 64 units each with ReLU activations. The decoder mirrors this structure to reconstruct the original input. The output layer uses no activation function, allowing the reconstructed values to match the continuous range of the log-mel features.
+
+\begin{table}[t]
+\centering
+\caption{Baseline autoencoder architecture.}
+\label{tab:arch}
+\begin{tabular}{l l l}
+\toprule
+Component & Layer & Output Dim \\
+\midrule
+Encoder & Linear + ReLU & 64 \\
+& Linear + ReLU & 64 \\
+& Linear + ReLU & 8 (bottleneck) \\
+\midrule
+Decoder & Linear + ReLU & 64 \\
+& Linear + ReLU & 64 \\
+& Linear & 320 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 8-dimensional bottleneck is deliberately narrow: it forces the network to retain only the most salient acoustic structure of normal fan operation. Anomalous sounds, which deviate from these learned patterns, are reconstructed less accurately, producing higher MSE.
+
+The file-level anomaly score is defined as the mean reconstruction MSE across all frames:
+\begin{equation}
+    \text{Score}(f) = \frac{1}{T} \sum_{t=1}^{T} \| \mathbf{x}_t - \hat{\mathbf{x}}_t \|^2
+\end{equation}
+where $\mathbf{x}_t$ is the input vector for frame $t$, $\hat{\mathbf{x}}_t$ is the autoencoder's reconstruction, and $T \approx 300$ is the number of frames per file.
+
+\subsection{Pretrained Models}
+
+We evaluate four pretrained models from the MIMII fan subset: id\_00, id\_02, id\_04, and id\_06. Each model was trained on a different individual fan unit in the MIMII dataset using only normal-condition recordings with Adam optimizer for 50 epochs, following the protocol described in~\cite{purohit2019mimii}. The four models share the same architecture but differ in their learned weights, as each captured a different fan unit's acoustic profile. This allows us to study how different source-domain acoustic profiles transfer to our target hardware.
+
+\section{Results}
+
+\subsection{Source-Domain Baseline Performance}
+
+Before evaluating on our target data, we establish each model's performance on the original MIMII source-domain test sets. Each test set consists of all anomalous segments plus an equal number of randomly selected normal segments, yielding a balanced (50/50) evaluation. Table~\ref{tab:source} summarizes the results.
+
+\begin{table}[t]
+\centering
+\caption{Source-domain performance on MIMII fan test sets (balanced classes, optimal F1 threshold).}
+\label{tab:source}
+\begin{tabular}{l c c c c c}
+\toprule
+Model & Thr. & Acc. & Prec. & Rec. & F1 \\
+\midrule
+id\_00 & 6.95 & .585 & .550 & .929 & .691 \\
+id\_02 & 6.02 & .695 & .641 & .886 & .744 \\
+id\_04 & 5.30 & .634 & .577 & .997 & .731 \\
+id\_06 & 7.01 & .906 & .871 & .953 & .910 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Model id\_06 is the clear best performer on its own source data (F1 = 0.910). The other three models show moderate performance (F1 = 0.69--0.74) with high recall but low precision. The optimal thresholds fall in a narrow range of 5.3--7.0.
+
+\subsection{Source vs.\ Target Domain Comparison}
+
+Table~\ref{tab:srctgt} provides a side-by-side comparison of each model's performance on the source domain versus our target domain.
+
+\begin{table}[t]
+\centering
+\caption{Source vs.\ target domain comparison. F1 at each domain's optimal threshold.}
+\label{tab:srctgt}
+\begin{tabular}{l c c c c}
+\toprule
+& \multicolumn{2}{c}{Threshold} & \multicolumn{2}{c}{F1} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Model & Src & Tgt & Src & Tgt \\
+\midrule
+id\_00 & 6.95 & 35.6 & .691 & .807 \\
+id\_02 & 6.02 & 45.1 & .744 & .811 \\
+id\_04 & 5.30 & 38.2 & .731 & .846 \\
+id\_06 & 7.01 & 58.2 & .910 & .818 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This comparison reveals three important findings. First, the optimal thresholds on our target data (35--58) are 5--10x larger than on the source domain (5--7), confirming massive domain shift. For id\_06, the source threshold of 7.01 would classify every target-domain sample as anomalous. Second, source-domain performance does not predict transfer performance: id\_06 dominates on source (F1 = 0.910) but drops to 0.818 on target, while id\_04 (mediocre on source, F1 = 0.731) achieves the best target F1 (0.846). This reversal suggests that models which overfit to their source-domain fan transfer poorly. Third, for id\_00, id\_02, and id\_04, target-domain F1 actually exceeds source-domain F1, explained by the imbalanced class ratio (2:1) and potentially more distinctive anomaly signatures.
+
+\subsection{Cross-Model Transfer Evaluation}
+
+Table~\ref{tab:cross} shows the full target-domain evaluation. Model id\_04 achieves the highest AUC (0.769) and F1 (0.846), with the best balance between precision (0.805) and recall (0.892).
+
+\begin{table}[t]
+\centering
+\caption{Cross-model comparison on target dataset (180 samples).}
+\label{tab:cross}
+\begin{tabular}{l c c c c}
+\toprule
+Model & AUC & Thr. & F1 & Acc. \\
+\midrule
+id\_00 & .683 & 35.6 & .807 & .711 \\
+id\_02 & .746 & 45.1 & .811 & .744 \\
+id\_04 & .769 & 38.2 & .846 & .783 \\
+id\_06 & .743 & 58.2 & .818 & .756 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{model_comparison_auc_f1.png}
+\caption{AUC and F1 comparison across four pretrained models.}
+\label{fig:aucf1}
+\end{figure}
+
+\subsubsection{MSE Distribution Analysis}
+
+All four models produce substantially higher MSE values on our target data than on the source domain (mean MSE 41--73 vs.\ source thresholds 5--7), confirming significant domain shift. Model id\_00 exhibits the highest variance ($\sigma_{\text{normal}} = 25.41$), explaining its lower AUC. Model id\_04 offers the best trade-off: a compact normal distribution with a sufficient mean gap ($\Delta\mu = 14.40$).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{model_comparison_mse_violin.png}
+\caption{MSE distributions for normal vs.\ abnormal samples across all four models.}
+\label{fig:violin}
+\end{figure}
+
+\subsubsection{Breakdown by Operating Condition}
+
+Across all four models, a consistent pattern emerges: imbalance consistently produces the highest MSE, blocked shows intermediate values, and normal has the lowest MSE. This ordering is condition-driven rather than model-specific, confirming that the anomaly signals are robust.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{model_comparison_mse_by_condition.png}
+\caption{MSE distribution by operating condition for each model.}
+\label{fig:msecond}
+\end{figure}
+
+\subsubsection{Effect of Voltage and Noise}
+
+Higher voltage (12V) tends to produce elevated MSE across all models, as higher rotational speed amplifies spectral differences. A counterintuitive finding is that the quiet environment produces slightly higher MSE than the noise environment. This is explained by the fact that MIMII source-domain recordings include factory noise; our noise condition is acoustically closer to the source distribution, resulting in lower reconstruction error.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{model_comparison_mse_by_voltage.png}
+\caption{MSE distribution by voltage level for each model.}
+\label{fig:msevolt}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{model_comparison_mse_by_noise.png}
+\caption{MSE by noise environment. Quiet produces higher MSE.}
+\label{fig:msenoise}
+\end{figure}
+
+Based on these results, we select id\_04 as the base model for subsequent experiments.
+
+\subsection{Latent Feature Analysis and Multi-Class Classification}
+
+The baseline autoencoder uses MSE as a scalar anomaly score for binary detection. Here we investigate whether the 8-dimensional bottleneck encodes richer structure that supports multi-class fault diagnosis. All experiments use model id\_04.
+
+\subsubsection{Latent Feature Extraction}
+
+For each audio file, we extract frame-level latent representations by passing the 320-dim input vectors through the encoder only: $\mathbf{z}_t = f_{\text{enc}}(\mathbf{x}_t) \in \mathbb{R}^{8}$. The file-level representation is the temporal mean: $\bar{\mathbf{z}} = \frac{1}{T} \sum_{t=1}^{T} \mathbf{z}_t$. This yields one 8-dim vector per file.
+
+\subsubsection{Per-Dimension Analysis}
+
+Six out of eight latent dimensions ($z_1$--$z_6$) are effectively dead, producing zero activations across all 180 files (Figure~\ref{fig:latentdims}). Only $z_0$ (range 100--200, with normal lower and imbalance higher) and $z_7$ (range 120--210, partial separation) carry meaningful information. The pretrained bottleneck effectively operates as a 2-dimensional representation. This dead-neuron pattern is caused by the ReLU activation at the bottleneck output.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{latent_dimensions_by_condition_id_04.png}
+\caption{Per-dimension activation: only $z_0$ and $z_7$ are active; $z_1$--$z_6$ are dead.}
+\label{fig:latentdims}
+\end{figure}
+
+\subsubsection{t-SNE Visualization}
+
+t-SNE projection (perplexity = 30, PCA initialization) reveals a hierarchical structure. By condition (Figure~\ref{fig:tsnecond}): three classes form clearly separable clusters, each splitting into 2--3 sub-clusters. By voltage (Figure~\ref{fig:tsnevolt}): these sub-clusters correspond to voltage levels (4V, 8V, 12V), indicating the latent space simultaneously encodes fault type and operating speed. By noise: quiet and noise samples are intermixed within clusters, indicating noise robustness.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{tsne_by_condition_id_04.png}
+\caption{t-SNE of latent features by condition. Three classes form separable clusters with voltage-driven sub-structure.}
+\label{fig:tsnecond}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{tsne_by_voltage_id_04.png}
+\caption{t-SNE by voltage. Sub-clusters within each condition correspond to voltage levels.}
+\label{fig:tsnevolt}
+\end{figure}
+
+\subsubsection{Multi-Class Classification}
+
+Three classifiers on the 8-dim latent mean vectors with 5-fold stratified CV (Table~\ref{tab:clf}). Random Forest achieves 95.0\% accuracy, demonstrating that the pretrained latent features---without any fine-tuning---already support accurate three-class discrimination. SVM lags at 72.2\%, likely because only 2 active dimensions with large-scale values dominate the RBF kernel distance. Random Forest, being invariant to monotonic feature transformations, handles this naturally.
+
+\begin{table}[t]
+\centering
+\caption{Multi-class classification on 8-dim latent features (5-fold stratified CV).}
+\label{tab:clf}
+\begin{tabular}{l c c}
+\toprule
+Classifier & Accuracy & F1 (macro) \\
+\midrule
+SVM (RBF) & .722 $\pm$ .077 & .729 $\pm$ .075 \\
+Random Forest & .950 $\pm$ .041 & .950 $\pm$ .041 \\
+KNN (k=5) & .894 $\pm$ .044 & .891 $\pm$ .045 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{confusion_matrix_id_04.png}
+\caption{Confusion matrix for Random Forest refit on all 180 samples (for visualization; generalization reported via CV).}
+\label{fig:cm}
+\end{figure}
+
+\subsection{Fine-Tuning with Architecture Modification}
+
+\subsubsection{Architecture Change}
+
+We replace the bottleneck ReLU with LeakyReLU ($\alpha = 0.01$). LeakyReLU allows small negative gradients to flow ($f(x) = \alpha x$ for $x < 0$), enabling previously dead neurons to update during fine-tuning. Since activation functions have no learnable parameters, pretrained weights load directly into the new architecture.
+
+\subsubsection{Fine-Tuning Protocol}
+
+We fine-tune using only 60 normal-condition samples (48 train, 12 validation), preserving the unsupervised paradigm. Blocked and imbalance samples are never seen during training. Loss function: MSE (identical to original MIMII training). Optimizer: Adam, lr = $10^{-4}$. Early stopping patience: 15 epochs. Ran full 100 epochs without triggering early stopping. Training and validation loss curves converge smoothly without overfitting (Figure~\ref{fig:curves}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{training_curves_finetuned.png}
+\caption{Fine-tuning training curves. Train and val loss converge smoothly.}
+\label{fig:curves}
+\end{figure}
+
+\subsubsection{Anomaly Detection Results}
+
+Table~\ref{tab:finetune} shows dramatic improvements after fine-tuning.
+
+\begin{table}[t]
+\centering
+\caption{Binary anomaly detection: frozen baseline vs.\ fine-tuned.}
+\label{tab:finetune}
+\begin{tabular}{l c c c}
+\toprule
+Metric & Baseline & Fine-tuned & Change \\
+\midrule
+AUC & .769 & .997 & +.228 \\
+Best F1 & .846 & .984 & +.138 \\
+Threshold & 38.2 & 7.56 & -- \\
+Accuracy & .783 & .972 & +.189 \\
+Precision & .805 & .976 & +.171 \\
+Recall & .892 & .992 & +.100 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The AUC improves from 0.769 to 0.997, indicating near-perfect ranking. The optimal threshold drops from 38.2 to 7.56, returning to the source-domain scale (5--7). This is direct evidence that fine-tuning has eliminated the domain shift in reconstruction error magnitude.
+
+\subsubsection{Latent Dimension Activation}
+
+After fine-tuning, the number of active dimensions increased from 2/8 to 4/8 (Figure~\ref{fig:latentft}). Notably, $z_2$ is fully activated with clear condition-dependent variation: normal samples have higher $z_2$ values (60--90) than blocked (40--70) and imbalance (30--60). Dimension $z_1$ shows emerging activity with outliers up to 80. The remaining dimensions ($z_3$--$z_6$) show small negative values enabled by LeakyReLU but not yet meaningful variation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{latent_dimensions_by_condition_finetuned.png}
+\caption{Latent dimensions after fine-tuning. $z_2$ is now fully active with condition-dependent variation.}
+\label{fig:latentft}
+\end{figure}
+
+\subsubsection{t-SNE and Classification After Fine-Tuning}
+
+Compared to the frozen baseline, the fine-tuned t-SNE embeddings show tighter within-class clustering and larger inter-class margins (Figure~\ref{fig:tsneft}). Classification results confirm improved latent geometry: KNN accuracy improved from 89.4\% to 92.8\%, while Random Forest maintained 95.0\%. Standard deviations decreased for all classifiers (e.g., RF: 0.041 to 0.037; KNN: 0.044 to 0.028), indicating more consistent performance across CV folds. The 9 misclassified files likely represent genuinely ambiguous boundary cases that require more data or a supervised classification head.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{tsne_by_condition_finetuned.png}
+\caption{t-SNE after fine-tuning: tighter clusters, larger inter-class margins.}
+\label{fig:tsneft}
+\end{figure}
+
+
+\section{Future Work}
+
+\subsection{Ablation Study}
+
+We plan to separate the contributions of LeakyReLU and fine-tuning by running: (a) LeakyReLU only without training, and (b) fine-tune only with original ReLU. This will clarify how much each modification contributes to the AUC improvement from 0.769 to 0.997.
+
+\subsection{Multi-Task Learning with Classification Head}
+
+A classification head will be attached to the bottleneck: $\hat{y} = \text{softmax}(W_c \mathbf{z} + b_c)$, $W_c \in \mathbb{R}^{3 \times 8}$. The model will have two output paths---reconstruction via the decoder and classification via the head---trained jointly with a combined loss:
+\begin{equation}
+\mathcal{L} = \alpha \cdot \mathcal{L}_{\text{MSE}} + \beta \cdot \mathcal{L}_{\text{CE}}
+\end{equation}
+This requires labeled data from all three conditions (144 train, 36 test, 5-fold CV). The reconstruction term acts as a regularizer, preventing overfitting to classification while maintaining anomaly detection capability. The target is to exceed the current 95\% RF baseline.
+
+\subsection{Additional DA Method Comparison}
+
+We plan to benchmark domain-specific score normalization and Mahalanobis distance-based scoring against our fine-tuning approach, producing a unified comparison table.
+
+\subsection{Architecture Exploration}
+
+Further modifications include: bottleneck size sweeps (2, 4, 8, 16, 32); BatchNorm insertion to stabilize training; and variational autoencoder (VAE) with a KL divergence term:
+\begin{equation}
+\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{MSE}} + \beta \cdot D_{\text{KL}}(q(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z}))
+\end{equation}
+VAE training would naturally prevent dead dimensions and produce more interpretable latent spaces.
+
+\subsection{Edge Deployment}
+
+Migration from USB microphone to ESP32 + INMP441 I2S MEMS module will introduce an additional sensor-grade domain shift (consumer USB to embedded MEMS) to evaluate.
+
+
+\section{Conclusion}
+
+This paper presents a systematic study of acoustic anomaly detection under extreme cross-hardware domain shift. Our key findings are:
+
+\begin{enumerate}
+\item We collected a 180-sample dataset spanning three conditions, three voltages, and two noise environments, and demonstrated domain shift 5--10x more severe than DCASE benchmarks.
+\item Source-domain performance does not predict transfer performance: id\_06 (best on source, F1 = 0.910) transferred poorly, while id\_04 (mediocre on source, F1 = 0.731) transferred best---suggesting source-domain overfitting harms cross-hardware generalization.
+\item Only 2/8 bottleneck dimensions are active in the pretrained model due to ReLU dead neurons, yet these 2 dimensions support 95\% three-class classification via Random Forest---demonstrating that pretrained acoustic representations encode richer diagnostic information than their binary objective suggests.
+\item Fine-tuning with LeakyReLU achieves AUC 0.769 to 0.997, F1 0.846 to 0.984, with the threshold returning from 38.2 to 7.56 (matching source-domain scale), directly confirming successful domain alignment. Two additional latent dimensions are activated.
+\item The latent space encodes a hierarchical structure (condition at the coarse level, voltage at the fine level) with noise robustness, confirming that the encoder captures physically meaningful acoustic features.
+\end{enumerate}
+
+These results demonstrate that domain adaptation remains effective under extreme cross-hardware shifts, and provide a practical pathway for deploying pretrained acoustic monitoring systems to new HVAC installations.
+
+\begin{acks}
+This work was conducted as part of course 12-770 at Carnegie Mellon University.
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
