@@ -1,5 +1,6 @@
 # HVAC Fan Anomaly Detection
-
+## Week 5 Progress Update (2026-04-16)
+- **Task 3 & 4 deliverable (ACM format)**: [`report/12770ProjectProgressReport_Task3_Task4/final_report_v2.tex`](report/12770ProjectProgressReport_Task3_Task4/final_report_v2.tex)
 ## Week 5 Progress Update (2026-04-13)
 This week focused on two major efforts: (1) completing the experimental evaluation pipeline and (2) refining the project's problem statement around **domain shift in acoustic anomaly detection**.
 ### What We Did
